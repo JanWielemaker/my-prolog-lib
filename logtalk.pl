@@ -1,0 +1,1 @@
+/usr/local/share/logtalk/integration/logtalk_swi.pl
