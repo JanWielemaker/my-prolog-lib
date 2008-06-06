@@ -44,7 +44,7 @@ gctime(Name, N, Goal0) :-
 	->  GCAvgLeft is round((GCLeft1 - GCLeft0)/(GCN1 - GCN0))
 	;   GCAvgLeft = 0
 	),
-	format('% Time, #GC, GC Left, GCTime, AvgC, AvgI, AvgA, ADepth~n'),
+	format('% Time, #GC, GC Left, GCTime, AvgC, AvgCl, AvgI, AvgA, ADepth~n'),
 	log('~w & ~2f & ~D & ~D & ~2f ',
 	       [Name, UsedTime, GCN, GCAvgLeft, GCTime]),
 	gc_statistics_(N),
@@ -56,12 +56,13 @@ gctime(Name, N, Goal0) :-
 gc_statistics_(_N) :-
 	catch(gc_statistics(S), _, fail), !,
 %	writeln(S),
-	S = gc(Envs, Multi, Conts, Instr, Abort, ADepth),
+	S = gc(Envs, Multi, Conts, AltClauses, Instr, Abort, ADepth),
 	AvgC is Conts/Envs,
+	AvgCl is AltClauses/Envs,
 	AvgI is Instr/Conts,
 	AvgA is Abort/Multi,
-	log('& ~2f & ~2f & ~2f & ~2f \\\\~n',
-	       [AvgC, AvgI, AvgA, ADepth]).
+	log('& ~2f & ~2f, & ~2f & ~2f & ~2f \\\\~n',
+	    [AvgC, AvgCl, AvgI, AvgA, ADepth]).
 gc_statistics_(_).
 
 log(Fmt, Args) :-
