@@ -32,7 +32,8 @@ gctime(Name, N, Goal0) :-
 	    ->  Result = yes
 	    ;   Result = no
 	    )
-	;   forall(between(1, N, _), Goal)
+	;   forall(between(1, N, _), Goal),
+	    Result = yes 
 	),
 	statistics(cputime, NewTime), 
 	statistics(garbage_collection, [GCN1, GCBytes1, GCTime1, GCLeft1]), 
