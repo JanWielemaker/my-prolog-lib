@@ -16,7 +16,8 @@
 	, listpreds/1
 	, hashed/0			% list hashed predicates
 	, usage/1			% print time and heapusage
-	, pprof/1			% Pentium Profile (VMI)
+	, pprof/1,			% Pentium Profile (VMI)
+	  lsfd/0			% List file descriptors
 	]).
 
 :- style_check(+dollar).		% lock these predicates as system
@@ -50,6 +51,16 @@ mod(Name) :-
 	module(Old).
 mod(Name) :-
 	$break($warning('mod/1: ~w: No such module', Name)).
+
+
+%%	lsfd
+%
+%	List open file descriptors (Linux only).
+
+lsfd :-
+	current_prolog_flag(pid, PID),
+	format(string(Cmd), 'cd /proc/~w/fd && ls -l', [PID]),
+	shell(Cmd).
 
 
 		/********************************
