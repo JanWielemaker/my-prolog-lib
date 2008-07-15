@@ -1,1 +1,7 @@
-/usr/local/share/logtalk/integration/logtalk_swi.pl
+:- setenv('LOGTALKUSER', '/home/jan/logtalk').
+:- setenv('LOGTALKHOME', '/home/jan/src/lgtsvn').
+
+:- load_files('$LOGTALKHOME/integration/logtalk_swi',
+	      [ silent(true),
+		expand(true)
+	      ]).
