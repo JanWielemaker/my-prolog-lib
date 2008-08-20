@@ -37,44 +37,45 @@ list_bench_results(File, Id) :-
 %	To update, make it  dynamic,  delete   all  clauses  and run the
 %	benchmark. Then list the clauses and insert them below.
 %	
-%	Last update: SWI-Prolog 5.6.18 on AMD 2600+
+%	Last update: SWI-Prolog 5.6.59 (gcc:  -O3;   pl:  -O)  on AMD X2
+%	5400+ (64-bits)
 
-% :- dynamic saved_iterations/2.
-saved_iterations(tail_call_atom_atom, 57878).
-saved_iterations(binary_call_atom_atom, 42857).
-saved_iterations(cons_list, 38380).
-saved_iterations(walk_list, 47120).
-saved_iterations(walk_list_rec, 47244).
-saved_iterations(args(1), 47493).
-saved_iterations(args(2), 31690).
-saved_iterations(args(4), 22277).
-saved_iterations(args(8), 14019).
-saved_iterations(args(16), 7979).
-saved_iterations(cons_term, 36810).
-saved_iterations(walk_term, 45113).
-saved_iterations(walk_term_rec, 47619).
-saved_iterations(shallow_backtracking, 141732).
-saved_iterations(deep_backtracking, 26866).
-saved_iterations(choice_point, 41860).
-saved_iterations(trail_variables, 43062).
-saved_iterations(medium_unify, 543624).
-saved_iterations(deep_unify, 151559).
-saved_iterations(integer_add, 21028).
-saved_iterations(floating_add, 17928).
-saved_iterations(arg(1), 20022).
-saved_iterations(arg(2), 20022).
-saved_iterations(arg(4), 19523).
-saved_iterations(arg(8), 19802).
-saved_iterations(arg(16), 19759).
-saved_iterations(index, 41002).
-saved_iterations(assert_unit, 577).
-saved_iterations(access_unit, 12346).
-saved_iterations(slow_access_unit, 730).
-saved_iterations(setof, 5164).
-saved_iterations(pair_setof, 4000).
-saved_iterations(double_setof, 769).
-saved_iterations(bagof, 6508).
+:- dynamic saved_iterations/2.
 
+saved_iterations(tail_call_atom_atom, 145946).
+saved_iterations(binary_call_atom_atom, 94737).
+saved_iterations(cons_list, 91525).
+saved_iterations(walk_list, 122727).
+saved_iterations(walk_list_rec, 125581).
+saved_iterations(args(1), 120000).
+saved_iterations(args(2), 81818).
+saved_iterations(args(4), 54545).
+saved_iterations(args(8), 33333).
+saved_iterations(args(16), 19355).
+saved_iterations(cons_term, 84375).
+saved_iterations(walk_term, 110204).
+saved_iterations(walk_term_rec, 122727).
+saved_iterations(shallow_backtracking, 415385).
+saved_iterations(deep_backtracking, 59341).
+saved_iterations(choice_point, 94737).
+saved_iterations(trail_variables, 87097).
+saved_iterations(medium_unify, 771429).
+saved_iterations(deep_unify, 235161).
+saved_iterations(integer_add, 49091).
+saved_iterations(floating_add, 40909).
+saved_iterations(arg(1), 40000).
+saved_iterations(arg(2), 40909).
+saved_iterations(arg(4), 37500).
+saved_iterations(arg(8), 38217).
+saved_iterations(arg(16), 38298).
+saved_iterations(index, 100000).
+saved_iterations(assert_unit, 1525).
+saved_iterations(access_unit, 26471).
+saved_iterations(slow_access_unit, 1607).
+saved_iterations(setof, 7692).
+saved_iterations(pair_setof, 6522).
+saved_iterations(double_setof, 1837).
+saved_iterations(bagof, 10112).
 
 /*
 Pereira`s Benchmarks
