@@ -22,7 +22,7 @@ jump_to_node(E) :->
 	get(E, text_buffer, TB),
 	get(TB, scan, Caret, line, 0, start, SOL),
 	get(TB, scan, SOL, line, 0, end, EOL),
-	new(Re, regex('\\[\\sd+\\]$')),
+	new(Re, regex('\\[[0-9]+\\]$')),
 	(   send(Re, search, TB, SOL, EOL)
 	->  get(Re, register_value, TB, 0, NodeId),
 	    get(Re, quote, NodeId, Pattern),
