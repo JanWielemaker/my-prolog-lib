@@ -73,9 +73,9 @@ answer((answer([X]):-E)) :- !, seto(X,E,S), respond(S).
 answer((answer(X):-E)) :- seto(X,E,S), respond(S).
 
 seto(X,E,S) :-
-	pp(E),
+	portray_clause(({X} :- E)),
 	phrase(satisfy(E,G),Vars),
-	portray_clause((<> :- G)),
+	portray_clause(({X} :- G)),
 	(   setof(X,Vars^G,S)
 	->  true
 	;   S = []
@@ -102,11 +102,13 @@ satisfy((P0,Q0), (P,Q)) --> !, satisfy(P0, P), satisfy(Q0, Q).
 satisfy({P0}, (P->true)) --> !, satisfy(P0, P).
 satisfy(X^P0, P) --> !, satisfy(P0, P), [X].
 satisfy(\+P0, \+P) --> !, satisfy(P0, P).
-satisfy(numberof(X,P0,N), (setof(X,P,S),length(S,N))) --> !,
-	satisfy(P0, P).
-satisfy(setof(X,P0,S), setof(X,P,S)) --> !,
-	satisfy(P0, P).
-satisfy(+P0, \+ execution(P)) --> !,
+satisfy(numberof(X,P0,N), (setof(X,Vars^P,S),length(S,N))) --> !,
+	{ phrase(satisfy(P0,P),Vars) },
+	Vars.
+satisfy(setof(X,P0,S), setof(X,Vars^P,S)) --> !,
+	{ phrase(satisfy(P0,P),Vars) },
+	Vars.
+satisfy(+P0, \+ exceptionto(P)) --> !,
 	satisfy(P0, P).
 satisfy(X<Y, X<Y) --> !.
 satisfy(X=<Y, X=<Y) --> !.
