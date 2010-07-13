@@ -73,9 +73,9 @@ answer((answer([X]):-E)) :- !, seto(X,E,S), respond(S).
 answer((answer(X):-E)) :- seto(X,E,S), respond(S).
 
 seto(X,E,S) :-
-	portray_clause(({X} :- E)),
+%	portray_clause(({X} :- E)),
 	phrase(satisfy(E,G),Vars),
-	portray_clause(({X} :- G)),
+%	portray_clause(({X} :- G)),
 	(   setof(X,Vars^G,S)
 	->  true
 	;   S = []
@@ -98,13 +98,20 @@ replies([A|X]) :- display(', '), reply(A), replies(X).
 reply(N--U) :- !, write(N), display(' '), write(U).
 reply(X) :- write(X).
 
+%%	satisfy(+Term, -Goal)//
+%
+%	Originally, Term was meta-interpreted. If we   do not want every
+%	^/2-term to act as an existential quantification, this no longer
+%	works. Hence, we now compile the term   into  a goal and compute
+%	the existentially quantified variables.
+
 satisfy((P0,Q0), (P,Q)) --> !, satisfy(P0, P), satisfy(Q0, Q).
 satisfy({P0}, (P->true)) --> !, satisfy(P0, P).
 satisfy(X^P0, P) --> !, satisfy(P0, P), [X].
 satisfy(\+P0, \+P) --> !, satisfy(P0, P).
 satisfy(numberof(X,P0,N), (setof(X,Vars^P,S),length(S,N))) --> !,
 	{ phrase(satisfy(P0,P),Vars) },
-	Vars.
+	[S], Vars.			% S is an internal variable!
 satisfy(setof(X,P0,S), setof(X,Vars^P,S)) --> !,
 	{ phrase(satisfy(P0,P),Vars) },
 	Vars.
