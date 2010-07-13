@@ -1,6 +1,6 @@
 /* @(#)talkr.pl	24.1 2/23/88 */
 
-/* 
+/*
 	Copyright 1986, Fernando C.N. Pereira and David H.D. Warren,
 
 			   All Rights Reserved
@@ -38,7 +38,7 @@ wt(E,_) :- write(E).
 header([]).
 header([X|H]) :- write(X), tab(1), header(H).
 
-decomp(setof(X,P,S),[S,=,setof,X],P).  
+decomp(setof(X,P,S),[S,=,setof,X],P).
 decomp(\+(P),[\+],P) :- complex(P).
 decomp(numberof(X,P,N),[N,=,numberof,X],P).
 decomp(X^P,[exists,X|XX],P1) :- othervars(P,XX,P1).
@@ -72,11 +72,21 @@ answer((answer([]):-E)) :- !, holds(E,B), yesno(B).
 answer((answer([X]):-E)) :- !, seto(X,E,S), respond(S).
 answer((answer(X):-E)) :- seto(X,E,S), respond(S).
 
-seto(X,E,S) :- setof(X,satisfy(E),S), !.
-seto(X,E,[]).
+seto(X,E,S) :-
+	pp(E),
+	phrase(satisfy(E,G),Vars),
+	portray_clause((<> :- G)),
+	(   setof(X,Vars^G,S)
+	->  true
+	;   S = []
+	).
 
-holds(E,true) :- satisfy(E), !.
-holds(E,false).
+holds(E,True) :-
+	phrase(satisfy(E, G), _),
+	(   G
+	->  True = true
+	;   True = false
+	).
 
 yesno(true) :- display('Yes.').
 yesno(false) :- display('No.').
@@ -88,20 +98,21 @@ replies([A|X]) :- display(', '), reply(A), replies(X).
 reply(N--U) :- !, write(N), display(' '), write(U).
 reply(X) :- write(X).
 
-satisfy((P,Q)) :- !, satisfy(P), satisfy(Q).
-satisfy({P}) :- !, satisfy(P), !.
-satisfy(X^P) :- !, satisfy(P).
-satisfy(\+P) :- satisfy(P), !, fail.
-satisfy(\+P) :- !.
-satisfy(numberof(X,P,N)) :- !, setof(X,satisfy(P),S), length(S,N).
-satisfy(setof(X,P,S)) :- !, setof(X,satisfy(P),S).
-satisfy(+P) :- exceptionto(P), !, fail.
-satisfy(+P) :- !.
-satisfy(X<Y) :- !, X<Y.
-satisfy(X=<Y) :- !, X=<Y.
-satisfy(X>=Y) :- !, X>=Y.
-satisfy(X>Y) :- !, X>Y.
-satisfy(P) :- database(P).
+satisfy((P0,Q0), (P,Q)) --> !, satisfy(P0, P), satisfy(Q0, Q).
+satisfy({P0}, (P->true)) --> !, satisfy(P0, P).
+satisfy(X^P0, P) --> !, satisfy(P0, P), [X].
+satisfy(\+P0, \+P) --> !, satisfy(P0, P).
+satisfy(numberof(X,P0,N), (setof(X,P,S),length(S,N))) --> !,
+	satisfy(P0, P).
+satisfy(setof(X,P0,S), setof(X,P,S)) --> !,
+	satisfy(P0, P).
+satisfy(+P0, \+ execution(P)) --> !,
+	satisfy(P0, P).
+satisfy(X<Y, X<Y) --> !.
+satisfy(X=<Y, X=<Y) --> !.
+satisfy(X>=Y, X>=Y) --> !.
+satisfy(X>Y, X>Y) --> !.
+satisfy(P, database(P)) --> [].
 
 exceptionto(P) :-
    functor(P,F,N), functor(P1,F,N),
