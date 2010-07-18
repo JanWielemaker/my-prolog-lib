@@ -97,7 +97,7 @@ pp([H|T], Indent) :-
 pp(Term, Indent) :-
 	functor(Term, Name, 2),
 	current_op(_, Type, Name),
-	memberchk(Type, [xfx, yfx]), !,
+	memberchk(Type, [xfx, yfx, xfy]), !,
 	arg(1, Term, A1),
 	arg(2, Term, A2),
 	pp(A1, Indent), format(' ~q ', [Name]), pp(A2, Indent).
@@ -168,10 +168,10 @@ max(A, B, M) :-
 
 
 varname(N, [C]) :-
-	N < 26, !, 
+	N < 26, !,
 	C is N + 0'A.
 varname(N, [C1, C2]) :-
-	C1 is N // 26 + 0'A, 
+	C1 is N // 26 + 0'A,
 	C2 is N mod 26 + 0'A.
 
 indent(I) :-
