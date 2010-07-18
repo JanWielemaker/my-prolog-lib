@@ -137,14 +137,25 @@ longest_attribute([A := _|T], L0, L) :-
 	longest_attribute(T, L1, L).
 
 term_length(A, AL) :-
-	atomic(A), !,
+	atom(A), !,
 	atom_length(A, AL).
+term_length(A, AL) :-
+	atomic(A), !,
+	setup_call_cleanup(open_null_stream(Out),
+			   (   write(Out, A),
+			       character_count(Out, AL)
+			   ),
+			   close(Out)).
 term_length(Var, AL) :-
-	var(Var), !,
+	var(Var), !,			% _
 	AL = 1.
 term_length('$VAR'(N), AL) :-
+	integer(N), !,
 	varname(N, L),
 	length(L, AL).
+term_length('$VAR'(N), AL) :-
+	atom(N), !,
+	atom_length(N, AL).
 term_length('$aref'(N), AL) :-
 	atom_length(N, AL).
 
