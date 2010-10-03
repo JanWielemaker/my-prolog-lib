@@ -7,51 +7,16 @@
 */
 
 :- module(jan,
-	[ (l)/1				% Listing
-	, lib/1				% Load library
-	, mod/1				% enter a module
-	, son/0				% System mode
-	, soff/0			% User mode
-	, la/0				% List active
-	, listpreds/1
-	, hashed/0			% list hashed predicates
-	, usage/1			% print time and heapusage
-	, pprof/1,			% Pentium Profile (VMI)
-	  lsfd/0			% List file descriptors
+	[ son/0,			% System mode
+	  soff/0,			% User mode
+	  la/0,				% List active
+	  usage/1,			% print time and heapusage
+	  pprof/1,			% Pentium Profile (VMI)
+	  lsfd/0,			% List file descriptors
+	  nav/0,			% Navigator
+	  tmon/0,			% Thread monitor
+	  dbg/0				% Graphical debugger front-end
 	]).
-
-:- style_check(+dollar).		% lock these predicates as system
-					% predicates
-
-:- module_transparent
-	(l)/1, 
-	lib/1.
-
-l(Pred) :-				% listing
-	listing(Pred).
-
-lib(File) :-				% load a library
-	ensure_loaded(library(File)).
-
-		/********************************
-		*            MODULES            *
-		*********************************/
-
-%	mod(+Module)
-%	Switch to a module.  Return to the previous module on typing ^D.
-%	This predicate does not create a module if it does not exists.
-
-:- module_transparent mod/1.
-
-mod(Name) :-
-	current_module(Name), !,
-	context_module(Old),
-	module(Name),
-	prolog,
-	module(Old).
-mod(Name) :-
-	$break($warning('mod/1: ~w: No such module', Name)).
-
 
 %%	lsfd
 %
@@ -84,8 +49,10 @@ la :-
 	).
 
 
-hashed :-
-	listpreds(hashed(_)).
+%%	listpreds(+Condition) is det.
+%
+%	List the names  of  predicates  with   that  have  the  property
+%	Condition. E.g., listpreds(dynamic).
 
 listpreds(Cond) :-
 	functor(Cond, CondName, Arity),
@@ -103,35 +70,34 @@ listpreds(Cond) :-
 	    fail
 	;   '$style_check'(_, O)
 	).
-	
+
 
 		 /*******************************
 		 *	       TIMING		*
 		 *******************************/
 
-:- module_transparent
-	usage/1, 
-	pprof/1,
-	usage_call/2.
+:- meta_predicate
+	usage(0),
+	pprof(0).
 
 usage(Goal) :-
 	statistics(heapused, OldHeap),
 	statistics(globalused, OldGlobal),
-	statistics(cputime, OldTime), 
-	statistics(inferences, OldInferences), 
-	usage_call(Goal, Result), 
-	statistics(inferences, NewInferences), 
-	statistics(cputime, NewTime), 
+	statistics(cputime, OldTime),
+	statistics(inferences, OldInferences),
+	usage_call(Goal, Result),
+	statistics(inferences, NewInferences),
+	statistics(cputime, NewTime),
 	statistics(globalused, NewGlobal),
 	statistics(heapused, NewHeap),
-	UsedTime is NewTime - OldTime, 
+	UsedTime is NewTime - OldTime,
 	UsedHeap is NewHeap - OldHeap,
 	UsedGlobal is NewGlobal - OldGlobal,
-	UsedInf  is NewInferences - OldInferences, 
+	UsedInf  is NewInferences - OldInferences,
 	(   UsedTime =:= 0
 	->  Lips = 'Infinite'
 	;   Lips is integer(UsedInf / UsedTime)
-	), 
+	),
 	format('~D inferences in ~2f seconds (~w Lips); ~D bytes heap, ~D bytes global~n',
 	       [UsedInf, UsedTime, Lips, UsedHeap, UsedGlobal]),
 	report_result(Result).
@@ -155,4 +121,11 @@ pprof(Goal) :-
 	usage_call(Goal, Result),
 	show_pentium_profile,
 	report_result(Result).
-	
+
+nav :-
+	call(prolog_ide(open_navigator)).
+dbg :-
+	call(prolog_ide(debug_monitor)).
+tmon :-
+	call(prolog_ide(thread_monitor)).
+
