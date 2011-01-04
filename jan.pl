@@ -117,9 +117,9 @@ report_result(exception(E)) :-
 	fail.
 
 pprof(Goal) :-
-	reset_pentium_profile,
+	call(reset_pentium_profile),	% Fool naive xref
 	usage_call(Goal, Result),
-	show_pentium_profile,
+	call(show_pentium_profile),
 	report_result(Result).
 
 nav :-
