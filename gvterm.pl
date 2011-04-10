@@ -30,9 +30,25 @@ dotty_term(Term) :-
 			   close(Out)),
 %	process_create(path(cat), ['test.dot'], []),
 	setting(graphviz:dot_viewer, Program),
-	thread_create(process_create(path(Program), [File], []),
+	thread_create(run_dotty(Program, File),
 		      _,
 		      [detached(true)]).
+
+:- dynamic
+	dotty_process/1.
+
+run_dotty(Program, File) :-
+	process_create(path(Program), [File], [process(PID)]),
+	assert(dotty_process(PID)),
+	process_wait(PID, _),
+	retractall(dotty_process(PID)).
+
+kill_dotties :-
+	forall(dotty_process(PID),
+	       process_kill(PID)).
+
+:- at_halt(kill_dotties).
+
 
 %%	term_to_dot(+Term) is det.
 %
