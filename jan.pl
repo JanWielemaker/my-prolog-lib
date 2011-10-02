@@ -10,6 +10,7 @@
 	[ son/0,			% System mode
 	  soff/0,			% User mode
 	  la/0,				% List active
+	  listpreds/1,			% +Condition
 	  usage/1,			% print time and heapusage
 	  pprof/1,			% Pentium Profile (VMI)
 	  lsfd/0,			% List file descriptors
@@ -52,7 +53,12 @@ la :-
 %%	listpreds(+Condition) is det.
 %
 %	List the names  of  predicates  with   that  have  the  property
-%	Condition. E.g., listpreds(dynamic).
+%	Condition. E.g.
+%
+%	  ==
+%	  ?- listpreds(dynamic).
+%	  ?- listpreds(indexed(_)).
+%	  ==
 
 listpreds(Cond) :-
 	functor(Cond, CondName, Arity),
