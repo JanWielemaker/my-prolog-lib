@@ -64,9 +64,7 @@ term_to_dot(Term) :-
 
 term_to_dot(Out, Term) :-
 	\+ \+ ( numbervars(Term, 0, _, [singletons(true)]),
-		F = f(Term),
-		'$factorize_term'(F, Subst),
-		arg(1, F, Skel),
+		'$factorize_term'(Term, Skel, Subst),
 		label_factors(Subst),
 		phrase(struct(Skel), Codes),
 		format(Out, 'digraph structs {\n  node [shape=record];\n~s}\n', [Codes])
