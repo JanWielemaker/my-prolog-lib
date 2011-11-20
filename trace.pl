@@ -1,27 +1,50 @@
-/*  @(#) trace.pl 1.0.0 (UvA SWI) Wed Apr  4 10:18:14 1990
+/*  Part of SWI-Prolog
 
-    Copyright (c) 1990 Jan Wielemaker. All rights reserved.
-    jan@swi.psy.uva.nl
+    Author:        Jan Wielemaker
+    E-mail:        J.Wielemaker@vu.nl
+    WWW:           http://www.swi-prolog.org
+    Copyright (C): 1990-2011, University of Amsterdam
+			      Vu University Amsterdam
 
-    Purpose: Post execution tracer.
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+    As a special exception, if you link this library with other files,
+    compiled with a Free Software compiler, to produce an executable, this
+    library does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however
+    invalidate any other reasons why the executable file might be covered by
+    the GNU General Public License.
 */
 
 :- module(trace,
-	[ trace/2				% Goal x Record
-	, trace/1				% Goal
+	[ collect_trace/2			% Goal, Record
+	, collect_trace/1			% Goal
 	, analyse/1				% Record
-	, analyse/0				% 
+	, analyse/0				%
 %	, compare_traces/2			% Record x Record
 	]).
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+/** <module> Post execution debugger
+
 This library  defines a  post  excution tracer for   SWI-Prolog.  This
 module is     highly     prolog     dependant.    It    uses       the
 prolog_trace_interception mechanism described in the hackers corner of
 the  manual  to record   a   trace.  Also, it  uses  various  `hidden'
 predicates of SWI-Prolog.
 
-OVERVIEW
+---++ Overview
 
 The predicates trace/1 and trace/2 can be used to store a trace of the
 execution of a goal in the database.   They behave exactly the same as
@@ -42,36 +65,36 @@ effects.   The   post  execution tracer   also  allows   you  to trace
 backwards.  This simplifies examining  the spot ``just before  were it
 went wrong''.
 
-BUGS
+---++ Bugs
 
-* The variable bindings between the goals are lost by recording the trace
-  in the database.  This could be solved by recording variables by their
-  name, but this would seriously degrade performance (unless the entire
-  recording mechanism is moved to C).  Before I do that I want to know
-  how bad this is and whether this way of tracing is useful in practical
-  situations.
+  * The variable bindings between the goals are lost by recording the trace
+    in the database.  This could be solved by recording variables by their
+    name, but this would seriously degrade performance (unless the entire
+    recording mechanism is moved to C).  Before I do that I want to know
+    how bad this is and whether this way of tracing is useful in practical
+    situations.
 
-* Execution under the tracer is SLOW and consumes a LOT OF MEMORY.
-  Execution speed is about 40 times slower than normal Prolog execution,
-  which implies that debugging programs that take only a few seconds normal
-  execution time already take minutes under the tracer (and consumes
-  megabytes of memory).
+  * Execution under the tracer is SLOW and consumes a LOT OF MEMORY.
+    Execution speed is about 40 times slower than normal Prolog execution,
+    which implies that debugging programs that take only a few seconds normal
+    execution time already take minutes under the tracer (and consumes
+    megabytes of memory).
 
-REMARKS
+---++ Remarks
 
-* Remarks on the functionality and the usefullnes of this library package
-  are appreciated.
+  * Remarks on the functionality and the usefullnes of this library package
+    are appreciated.
 
-* This is a prototype; functionality may change without notice.
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+  * This is a prototype; functionality may change without notice.
+*/
 
 		/********************************
 		*         DECLARATIONS		*
 		********************************/
 
-:- module_transparent
-	trace/1,
-	trace/2.
+:- meta_predicate
+	collect_trace(0),
+	collect_trace(0, +).
 
 :- dynamic
 	last_port_number/2,			% Record x CallNo
@@ -80,8 +103,6 @@ REMARKS
 	trace_key/2,				% Key
 	last_find/3,				% Direction x Port x Goal
 	mark/3.					% Record x Name x CallNo
-
-:- index(port(1, 1, 0, 1, 1, 0)).
 
 :- flag('$trace_print_goal',      _, print).	% Predicate to print goal
 :- flag('$trace_show_context',    _, off).	% Show goal context?
@@ -93,17 +114,18 @@ REMARKS
 		*           TOPLEVEL		*
 		********************************/
 
-%	trace(+Goal)
+%%	collect_trace(:Goal)
+%
 %	Equivalent to trace(Goal, trace).
 
+collect_trace(Goal) :-
+	collect_trace(Goal, trace).
 
-trace(Goal) :-
-	trace(Goal, trace).
-
-%	trace(+Goal, +Record)
+%%	collect_trace(:Goal, +Record)
+%
 %	Create a trace in the database of the execution of `Goal'.
 
-trace(Goal, Record) :-
+collect_trace(Goal, Record) :-
 	destroy_record(Record),
 	concat('$trace_', Record, Key),
 	flag(Key, _, 1),
@@ -113,17 +135,17 @@ trace(Goal, Record) :-
 	;   start_trace(Record),
 	    '$fail'
 	).
-trace(_Goal, Record) :-
+collect_trace(_Goal, Record) :-
 	stop_trace(Record),
 	fail.
 
-	
+
 		/********************************
 		*       RECORD THE TRACE	*
 		********************************/
 
-:- '$hide'(start_trace, 1).
-:- '$hide'(stop_trace, 1).
+:- '$hide'(start_trace/1).
+:- '$hide'(stop_trace/1).
 
 start_trace(Record) :-
 	asserta(user:(
@@ -148,7 +170,7 @@ stop_trace(Record) :-
 intercept(Port, Frame) :-
 	trace_key(Record, Key),
 	prolog_frame_attribute(Frame, level,          Level),
-	prolog_frame_attribute(Frame, goal,  	      Goal),
+	prolog_frame_attribute(Frame, goal,	      Goal),
 	prolog_frame_attribute(Frame, context_module, Context),
 	flag(Key, CallNo, CallNo+1),
 	assertz(port(Record, CallNo, Port, Level, Goal, Context)).
@@ -204,15 +226,15 @@ show_trace(Record, CallNo, creep) :- !,
 	show_trace(Record, NextCallNo).
 show_trace(Record, _, continue(CallNo)) :-
 	show_trace(Record, CallNo).
-	
+
 leash_port(_Port) :-
 	flag('$trace_leash_this_port', on, off), !.
 leash_port(Port) :-
-	leash(?Port).
+	leash(?(Port)).
 
 
 		/********************************
-		*         REPLY SECTION  	*
+		*         REPLY SECTION		*
 		********************************/
 
 get_reply(Record, CallNo, Continue) :-
@@ -226,7 +248,7 @@ get_reply(Record, CallNo, Continue) :-
 	;   Continue = again,
 	    format('type `h'' for help~n')
 	).
-	
+
 action(creep,	_,	_,	creep) :- format('creep~n'). % creep
 action(quit,	_,	_,	quit)  :- format('quit~n').  % quit
 action(previous, _,	CallNo, continue(NextNo)) :-	     % previous
@@ -240,11 +262,11 @@ action(previous, _,	CallNo, continue(NextNo)) :-	     % previous
 action(listing, Record, CallNo, again) :-		     % listing
 	port(Record, CallNo, _Port, _Level, Goal, _Context),
 	format('Listing~n'),
-	user:listing(Goal).	
+	user:listing(Goal).
 action(edit, Record, CallNo, again) :-			     % edit
 	port(Record, CallNo, _Port, _Level, Goal, _Context),
 	format('Edit~n'),
-	user:ed(Goal).	
+	user:ed(Goal).
 action(find_forwards, Record, CallNo, Continue) :-	     % find -->
 	find_forwards(Record, CallNo, Continue).
 action(find_backwards, Record, CallNo, Continue) :-	     % find <--
@@ -268,13 +290,13 @@ action(goals,	Record,	CallNo,	again)  :-		     % goals
 action(mark,	Record, CallNo, again) :-		     % mark
 	get_mark('mark as ? ', Mark),
 	assert_mark(Record, Mark, CallNo).
-action(goto_mark,Record, _CallNo, Continue) :-	     	     % goto_mark
+action(goto_mark,Record, _CallNo, Continue) :-		     % goto_mark
 	get_mark('goto mark ? ', Mark),
 	(   mark(Record, Mark, NextNo)
 	->  Continue = continue(NextNo)
 	;   format('[No such mark]~n'),
 	    Continue = again
-	).	
+	).
 action(show_marks,Record, _, again) :-			     % show_marks
 	format('~n[show marks]~n'),
 	mark(Record, Mark, CallNo),
@@ -305,19 +327,19 @@ action(failing_sibling, Record, CallNo, Continue) :-	     % failing_sibling
 	;   format('~n[Can''t find failing sibling]~n'),
 	    Continue = again
 	).
-action(skip,    Record,	CallNo,	continue(NextNo)) :- 	     % skip
+action(skip,    Record,	CallNo,	continue(NextNo)) :-	     % skip
 	format('skip~n'),
 	port(Record, CallNo, _Port, Level, _Goal, Context),
 	port(Record, NextNo,  Out,  Level,  _,    Context),
 	NextNo > CallNo,
 	(Out == exit ; Out == fail), !.
 action(back_skip, Record, CallNo, Continue) :-		     % back_skip
-	port(Record, CallNo, Port, Level, _Goal, Context),
+	port(Record, CallNo, Port, Level, _, Context),
 	(   Port == call
 	->  !, format('~n[start of goal]~n'),
 	    Continue = again
 	;   flag('$trace_no', _, 0),
-	    port(Record, No, EntryPort, Level, _Goal, Context),
+	    port(Record, No, EntryPort, Level, _, Context),
 	    (   No == CallNo
 	    ->  !, flag('$trace_no', NextNo, NextNo),
 	        format('back skip~n'),
@@ -326,7 +348,7 @@ action(back_skip, Record, CallNo, Continue) :-		     % back_skip
 	        flag('$trace_no', _, No),
 		fail
 	    )
-	).	    
+	).
 action(up, Record, CallNo, Continue) :-			     % up
 	(   parent_goal(Record, CallNo, Parent)
 	->  format('up~n'),
@@ -379,7 +401,7 @@ parent_goal(Record, CallNo, Parent) :-
 	    (Port == call; Port == redo),
 	    flag('$trace_callno', _, No),
 	    fail
-	).	
+	).
 
 %	find_forwards(+Record, +CallNo, -Continue)
 %	find_backwards(+Record, +CallNo, -Continue)
@@ -415,17 +437,17 @@ do_find(Direction, Record, CallNo, Port, Goal, continue(NextNo)) :-
 	assert(last_find(Direction, Port, Goal)),
 	(   Direction == forwards
 	->  (   atom(Goal)
-	    ->  port(Record, NextNo, Port, _Level, FullGoal, _Context),
+	    ->  port(Record, NextNo, Port, _, FullGoal, _),
 		NextNo > CallNo,
 		functor(FullGoal, Goal, _)
-	    ;   port(Record, NextNo, Port, _Level, Goal, _Context),
+	    ;   port(Record, NextNo, Port, _, Goal, _),
 		NextNo > CallNo
 	    )
 	;   (   atom(Goal)
-	    ->  findall(No, (port(Record, No, Port, _L, FullGoal, _C),
+	    ->  findall(No, (port(Record, No, Port, _, FullGoal, _),
 			     No < CallNo,
 			     functor(FullGoal, Goal, _)), Nos)
-	    ;   findall(No, (port(Record, No, Port, _L, Goal, _C),
+	    ;   findall(No, (port(Record, No, Port, _, Goal, _),
 			     No < CallNo), Nos)
 	    ),
 	    last(NextNo, Nos)
@@ -453,7 +475,7 @@ port_id(f, fail).
 port_id(e, exit).
 port_id(r, redo).
 port_id(u, unify).
-	
+
 %	get_goal(-Name, -Arity)
 %	Get name/arity pair of a goal.
 
@@ -534,9 +556,9 @@ command([f,/],		find_forwards,	'Find port and optional goal').
 command([g],		goals,		'Print goals').
 command([h],		help,		'Show list of options').
 command([q],		quit,		'Exit analyser').
-command([p], 		previous,	'Go back one port').
-command([r,?], 		find_backwards,	'Find port and optional goal').
-command([s],   		skip,		'Skip this goal').
+command([p],		previous,	'Go back one port').
+command([r,?],		find_backwards,	'Find port and optional goal').
+command([s],		skip,		'Skip this goal').
 command([=, '^@'],	mark,		'Mark this spot').
 command([m],		goto_mark,	'Goto Marked spot').
 command([n],		find_again,	'Repeat last search').
@@ -614,7 +636,7 @@ print_goal(Goal) :-
 		********************************/
 
 warning(Fmt, Args) :-
-	'$warning'(Fmt, Args).
+	print_message(warning, format(Fmt, Args)).
 
 beep :-
 	put(7).
