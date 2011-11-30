@@ -34,9 +34,9 @@ lsfd :-
 		********************************/
 
 son :-
-	style_check(+dollar).
+	set_prolog_flag(access_level, system).
 soff :-
-	style_check(-dollar).
+	set_prolog_flag(access_level, user).
 
 la :-
 	'$style_check'(O, O),
