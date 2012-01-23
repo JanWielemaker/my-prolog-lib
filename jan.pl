@@ -16,7 +16,8 @@
 	  lsfd/0,			% List file descriptors
 	  nav/0,			% Navigator
 	  tmon/0,			% Thread monitor
-	  dbg/0				% Graphical debugger front-end
+	  dbg/0,			% Graphical debugger front-end
+	  tserv/0			% Start server
 	]).
 
 %%	lsfd
@@ -135,3 +136,7 @@ dbg :-
 tmon :-
 	call(prolog_ide(thread_monitor)).
 
+tserv :-
+	prolog_server(Port, []),
+	print_message(informational,
+		      format('Server started; use telnet localhost ~w~n', [Port])).
