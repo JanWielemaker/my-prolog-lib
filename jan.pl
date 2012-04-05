@@ -123,11 +123,17 @@ report_result(exception(E)) :-
 	print_message(error, E),
 	fail.
 
+:- if(current_predicate(reset_pentium_profile/0)).
 pprof(Goal) :-
-	call(reset_pentium_profile),	% Fool naive xref
+	reset_pentium_profile,
 	usage_call(Goal, Result),
-	call(show_pentium_profile),
+	show_pentium_profile,
 	report_result(Result).
+:- else.
+pprof(_Goal) :-
+	print_message(error,
+		      format('Not compiled with pentium profile support', [])).
+:- endif.
 
 nav :-
 	call(prolog_ide(open_navigator)).
