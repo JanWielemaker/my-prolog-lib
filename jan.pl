@@ -109,6 +109,9 @@ usage(Goal) :-
 	       [UsedInf, UsedTime, Lips, UsedHeap, UsedGlobal]),
 	report_result(Result).
 
+:- meta_predicate
+	usage_call(0, -).
+
 usage_call(Goal, Rval) :-
 	catch(Goal, E, true), !,
 	(   var(E)
