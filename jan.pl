@@ -19,6 +19,7 @@
 	  dbg/0,			% Graphical debugger front-end
 	  tserv/0			% Start server
 	]).
+:- use_module(library(dcg/basics)).
 
 %%	lsfd
 %
