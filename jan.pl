@@ -88,25 +88,31 @@ listpreds(Cond) :-
 	pprof(0).
 
 usage(Goal) :-
-	statistics(heapused, OldHeap),
+	resident_memory(RSS0),
+	get_time(Wall0),
 	statistics(globalused, OldGlobal),
+	statistics(process_cputime, PCPU0),
 	statistics(cputime, OldTime),
 	statistics(inferences, OldInferences),
 	usage_call(Goal, Result),
 	statistics(inferences, NewInferences),
 	statistics(cputime, NewTime),
+	statistics(process_cputime, PCPU1),
 	statistics(globalused, NewGlobal),
-	statistics(heapused, NewHeap),
+	get_time(Wall1),
+	resident_memory(RSS1),
 	UsedTime is NewTime - OldTime,
-	UsedHeap is NewHeap - OldHeap,
+	RSS is RSS1 - RSS0,
+	PCPU is PCPU1 - PCPU0,
 	UsedGlobal is NewGlobal - OldGlobal,
 	UsedInf  is NewInferences - OldInferences,
+	Wall is Wall1 - Wall0,
 	(   UsedTime =:= 0
 	->  Lips = 'Infinite'
 	;   Lips is integer(UsedInf / UsedTime)
 	),
-	format('~D inferences in ~2f seconds (~w Lips); ~D bytes heap, ~D bytes global~n',
-	       [UsedInf, UsedTime, Lips, UsedHeap, UsedGlobal]),
+	format('~3f/~3f CPU in ~3f sec (~w Lips); ~D bytes RSS, ~D bytes global~n',
+	       [UsedTime, PCPU, Wall, Lips, RSS, UsedGlobal]),
 	report_result(Result).
 
 usage_call(Goal, Rval) :-
@@ -122,6 +128,17 @@ report_result(fail) :- !, fail.
 report_result(exception(E)) :-
 	print_message(error, E),
 	fail.
+
+resident_memory(Mem) :-
+	current_prolog_flag(pid, Pid),
+	format(atom(StatFile), '/proc/~d/statm', [Pid]),
+	setup_call_cleanup(
+	    open(StatFile, read, In),
+	    read_line_to_codes(In, Codes),
+	    close(In)),
+	phrase((number(_),whites,number(MemPages)), Codes, _),
+	Mem is MemPages*4096.			% page size
+
 
 :- if(current_predicate(reset_pentium_profile/0)).
 pprof(Goal) :-
