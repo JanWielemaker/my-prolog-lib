@@ -183,10 +183,10 @@ varname(N, [C]) :-
 	C is N + 0'A.
 varname(N, [C1, C2]) :-
 	C1 is N // 26 + 0'A,
-	C2 is N mod 26 + 0'A.
+	C2 is mod(N, 26) + 0'A.
 
 indent(I) :-
 	Tabs is I // 8,
 	forall(between(1, Tabs, _), put(9)),
-	Spaces is I mod 8,
+	Spaces is mod(I, 8),
 	tab(Spaces).
