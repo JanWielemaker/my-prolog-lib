@@ -38,7 +38,7 @@ pretty_print(Term) :-
 	Term = (_Head :- _Body), !,
 	portray_clause(Term).
 pretty_print(Term) :-
-	numbervars(Term, 0, _),
+	numbervars(Term, 0, _, [attvar(skip)]),
 	pp(Term, 0),
 	write('.'), nl, fail.
 pretty_print(_).
