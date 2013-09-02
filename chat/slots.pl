@@ -15,7 +15,7 @@ i_sentence(imp(s(_,Verb,VArgs,VMods)),imp(V,Args)) :-
    conc(Up,VMods,Mods),
    i_verb_mods(Mods,_,[],Slots,Args0,Up,+0).
 
-i_np(there,Y,quant(void,X,`true,`true,[],Y),[],_,_,XA,XA).
+i_np(there,Y,quant(void,X,~true,~true,[],Y),[],_,_,XA,XA).
 i_np(NP,Y,Q,Up,Id0,Index,XA0,XA) :-
    i_np_head(NP,Y,Q,Det,Det0,X,Pred,QMods,Slots0,Id0),
    held_arg(XA0,XA,Slots0,Slots,Id0,Id),
@@ -39,30 +39,30 @@ i_np_head0(np_head(Det,Adjs,Noun),X,T,Det,Head0,Pred0,Pred,Slots) :-
    i_adjs(Adjs,X,T,X,Head0,Head,Pred0,Pred),
    i_noun(Noun,X,Head,Slots).
 i_np_head0(np_head(int_det(V),Adjs,Noun),
-      Type-X,Type-X,Det,`true,Pred,Pred,
+      Type-X,Type-X,Det,~true,Pred,Pred,
       [slot(prep(of),Type,X,_,comparator)]) :-
    comparator(Noun,Type,V,Adjs,Det).
 i_np_head0(np_head(quant(Op0,N),Adjs,Noun),
-      Type-X,Type-X,void,`P,Pred,Pred,[]) :-
+      Type-X,Type-X,void,~P,Pred,Pred,[]) :-
    measure(Noun,Type,Adjs,Units),
    conversion(N,Op0,Type,V,Op),
    measure_op(Op,X,V--Units,P).
 i_np_head0(name(Name),
-      Type-Name,Type-Name,id,`true,Pred,Pred,[]) :-
+      Type-Name,Type-Name,id,~true,Pred,Pred,[]) :-
    name_template(Name,Type).
-i_np_head0(wh(X),X,X,id,`true,Pred,Pred,[]).
+i_np_head0(wh(X),X,X,id,~true,Pred,Pred,[]).
 
-i_np_mods(Mods,_,[],`true,[],Mods,_,_).
+i_np_mods(Mods,_,[],~true,[],Mods,_,_).
 i_np_mods([Mod|Mods],X,Slots0,Pred0,QMods0,Up,Id,Index) :-
    i_np_mod(Mod,X,Slots0,Slots,
             Pred0,Pred,QMods0,QMods,Up0,-Id,Index),
    conc(Up0,Mods,Mods0),
    i_np_mods(Mods0,X,Slots,Pred,QMods,Up,+Id,Index).
-i_np_mods(Mods,_,[Slot|Slots],`true,QMods,Mods,Id,_) :-
+i_np_mods(Mods,_,[Slot|Slots],~true,QMods,Mods,Id,_) :-
    i_voids([Slot|Slots],QMods,Id).
 
 i_voids([],[],_).
-i_voids([Slot|Slots],[quant(void,X,`true,`true,[],_)|QMods],Id) :-
+i_voids([Slot|Slots],[quant(void,X,~true,~true,[],_)|QMods],Id) :-
    nominal_slot(Slot,X,-Id), !,
    i_voids(Slots,QMods,+Id).
 i_voids([_|Slots],QMods,Id) :-
@@ -75,8 +75,8 @@ i_rel(reduced_rel(X,S),X,Pred,Pred,[A|QMods],QMods,Up,Id) :-
 i_rel(conj(Conj,Left,Right),X,
       conj(Conj,LPred,LQMods,RPred,RQMods)&Pred,Pred,
       QMods,QMods,Up,Id) :-
-   i_rel(Left,X,LPred,`true,LQMods,[],[],-Id),
-   i_rel(Right,X,RPred,`true,RQMods,[],Up,+Id).
+   i_rel(Left,X,LPred,~true,LQMods,[],[],-Id),
+   i_rel(Right,X,RPred,~true,RQMods,[],Up,+Id).
 
 i_np_mod(pp(Prep,NP),
       X,Slots0,Slots,Pred,Pred,[QMod|QMods],QMods,Up,Id0,Index0) :-
@@ -95,7 +95,7 @@ i_noun(Noun,Type-X,P,Slots) :-
 i_bind(Prep,Slots0,Slots,_,X,Id,arg,P,[],[]) :-
    in_slot(Slots0,Case,X,Id,Slots,P),
    deepen_case(Prep,Case).
-i_bind(prep(Prep),Slots,Slots,X,Y,_,adjoin,`P,PSlots,XArg) :-
+i_bind(prep(Prep),Slots,Slots,X,Y,_,adjoin,~P,PSlots,XArg) :-
    i_adjoin(Prep,X,Y,PSlots,XArg,P).
 
 i_np_modify(adjoin,P,N,N&P,_,unit).
@@ -114,19 +114,19 @@ i_adjs([Adj|Adjs],X,T,T0,Head0,Head,Pred0,Pred) :-
    i_adj(Adj,X,T,T1,Head0,Head1,Pred0,Pred1),
    i_adjs(Adjs,X,T1,T0,Head1,Head,Pred1,Pred).
 
-i_adj(adj(Adj),Type-X,T,T,Head,Head,`P&Pred,Pred) :-
+i_adj(adj(Adj),Type-X,T,T,Head,Head,~P&Pred,Pred) :-
    restriction(Adj,Type,X,P).
 i_adj(adj(Adj),TypeX-X,TypeV-V,_,
-   aggr(F,V,[X],Head,Pred),Head,`true,Pred) :-
+   aggr(F,V,[X],Head,Pred),Head,~true,Pred) :-
    aggr_adj(Adj,TypeV,TypeX,F).
 i_adj(sup(Op0,adj(Adj)),Type-X,Type-V,_,
-      aggr(F,V,[Y,X],Head,`P&Pred),Head,`true,Pred) :-
+      aggr(F,V,[Y,X],Head,~P&Pred),Head,~true,Pred) :-
    chat_sign(Adj,Sign),
    inverse(Op0,Sign,Op),
    i_sup_op(Op,F),
    attribute(Adj,Type,X,_,Y,P).
 i_adj(adj(Adj),TypeX-X,T,T,_,
-      Head,Head,quant(void,TypeX-Y,`P,`Q&Pred,[],_),Pred) :-
+      Head,Head,quant(void,TypeX-Y,~P,~Q&Pred,[],_),Pred) :-
    attribute(Adj,TypeX,X,_,Y,P),
    standard(Adj,TypeX,Y,Q).
 
@@ -150,7 +150,7 @@ reshape_pred(have,Subj,Neg,Verb0,
       pred(Subj,Neg,Verb,[quant(Det,X,Head,Pred,QArgs,Y)|MRest])) :-
    have_pred(Head0,Verb0,Head,Verb).
 
-have_pred(`Head,Verb,`true,(Head,Verb)).
+have_pred(~Head,Verb,~true,(Head,Verb)).
 have_pred(Head,Verb,Head,Verb) :-
    meta_head(Head).
 
@@ -184,7 +184,7 @@ verb_slot(pp(Prep,NP),
 verb_slot(void,XA,XA,Slots,Slots,Args,Args,[],_) :-
    in_slot(Slots,pred,_,_,_,_).
 verb_slot(pp(prep(Prep),NP),
-      TXArg,TXArg,Slots0,Slots,[Q& `P|Args],Args,Up,Id0) :-
+      TXArg,TXArg,Slots0,Slots,[Q& ~P|Args],Args,Up,Id0) :-
    in_slot(Slots0,pred,X,Id0,Slots1,_),
    i_adjoin(Prep,X,Y,PSlots,XArg,P),
    i_np_head(NP,Y,Q,LDet,LDet0,LX,LPred,LQMods,LSlots0,Id0),
@@ -196,7 +196,7 @@ verb_slot(arg(SCase,NP),
    i_np(NP,X,Q,Up,Id,unit,XArg0,XArg),
    in_slot(Slots0,Case,X,Id,Slots,_),
    deepen_case(SCase,Case).
-verb_slot(adverb(Adv),XA,XA,Slots0,Slots,[`P|Args],Args,[],Id) :-
+verb_slot(adverb(Adv),XA,XA,Slots0,Slots,[~P|Args],Args,[],Id) :-
    adv_template(Adv,Case,X,P),
    in_slot(Slots0,Case,X,Id,Slots,_).
 verb_slot(arg(pred,AP),XA,XA,Slots0,Slots,Args0,Args,Up,Id) :-
@@ -204,22 +204,22 @@ verb_slot(arg(pred,AP),XA,XA,Slots0,Slots,Args0,Args,Up,Id) :-
    i_pred(AP,X,Args0,Args,Up,Id).
 
 i_pred(conj(Conj,Left,Right),X,
-      [conj(Conj,`true,LQMods,`true,RQMods)|QMods],
+      [conj(Conj,~true,LQMods,~true,RQMods)|QMods],
       QMods,Up,Id) :-
    i_pred(Left,X,LQMods,[],[],-Id),
    i_pred(Right,X,RQMods,[],Up,+Id).
-i_pred(AP,T,[`Head&Pred|As],As,[],_) :-
-   i_adj(AP,T,_,_,Head,true,Pred,`true).
-i_pred(value(adj(Adj),wh(TypeY-Y)),Type-X,[`H|As],As,[],_) :-
+i_pred(AP,T,[~Head&Pred|As],As,[],_) :-
+   i_adj(AP,T,_,_,Head,true,Pred,~true).
+i_pred(value(adj(Adj),wh(TypeY-Y)),Type-X,[~H|As],As,[],_) :-
    attribute(Adj,Type,X,TypeY,Y,H).
-i_pred(comp(Op0,adj(Adj),NP),X,[P1 & P2 & `P3,Q|As],As,Up,Id) :-
+i_pred(comp(Op0,adj(Adj),NP),X,[P1 & P2 & ~P3,Q|As],As,Up,Id) :-
    i_np(NP,Y,Q,Up,Id,unit,[],[]),
    chat_sign(Adj,Sign),
    i_measure(X,Adj,Type,U,P1),
    i_measure(Y,Adj,Type,V,P2),
    inverse(Op0,Sign,Op),
    measure_op(Op,U,V,P3).
-i_pred(pp(prep(Prep),NP),X,[`H,Q|As],As,Up,Id) :-
+i_pred(pp(prep(Prep),NP),X,[~H,Q|As],As,Up,Id) :-
    i_np(NP,Y,Q,Up,Id,unit,[],[]),
    adjunction(Prep,X,Y,H).
 
@@ -229,9 +229,9 @@ i_adjoin(with,TS-S,TV-Y,[slot(prep(of),TV,Z,_,free)],
 i_adjoin(Prep,X,Y,[],[],P) :-
    adjunction(Prep,X,Y,P).
 
-i_measure(Type-X,Adj,Type,X,`true) :-
+i_measure(Type-X,Adj,Type,X,~true) :-
    units(Adj,Type).
-i_measure(TypeX-X,Adj,TypeY,Y,quant(void,TypeY-Y,`P,`true,[],_)) :-
+i_measure(TypeX-X,Adj,TypeY,Y,quant(void,TypeY-Y,~P,~true,[],_)) :-
    attribute(Adj,TypeX,X,TypeY,Y,P).
 
 i_verb_mods(Mods,_,XA,Slots0,Args0,Up,Id) :-
@@ -267,13 +267,13 @@ inverse(less,-,more).
 inverse(more,-,less).
 inverse(X,+,X).
 
-noun_template(Noun,TypeV,V,`P,
+noun_template(Noun,TypeV,V,~P,
       [slot(poss,TypeO,O,Os,index)|Slots]) :-
    property(Noun,TypeV,V,TypeO,O,P,Slots,Os,_).
-noun_template(Noun,TypeV,V,aggr(F,V,[],`true,`true),
+noun_template(Noun,TypeV,V,aggr(F,V,[],~true,~true),
    [slot(prep(of),TypeS,_,_,free)]) :-
    aggr_noun(Noun,TypeV,TypeS,F).
-noun_template(Noun,Type,X,`P,Slots) :-
+noun_template(Noun,Type,X,~P,Slots) :-
    thing(Noun,Type,X,P,Slots,_).
 noun_template(Noun,TypeV,V,apply(F,P),
       [slot(prep(of),TypeX,X,_,apply)]) :-

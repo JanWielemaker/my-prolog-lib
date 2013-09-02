@@ -367,10 +367,10 @@ control([bye,'.']) :- !,
    display('Cheerio.'),
    nl.
 control([trace,'.']) :- !,
-   tracing `= on,
+   tracing ~= on,
    display('Tracing from now on!'), nl, fail.
 control([do,not,trace,'.']) :- !,
-   tracing `= off,
+   tracing ~= off,
    display('No longer tracing.'), nl, fail.
 control([do,mini,demo,'.']) :- !,
    display('Executing mini demo...'), nl,
@@ -549,9 +549,9 @@ check_word(Word,NewWord) :-
    NewWord0 \== !,
    check_word(NewWord0,NewWord).
 
-:- mode `=(+,+), =+(+,-), =:(+,?).
+:- mode ~=(+,+), =+(+,-), =:(+,?).
 
-Var `= Val :-
+Var ~= Val :-
  ( recorded(Var,val(_),P), erase(P)
  ; true), !,
  recordz(Var,val(Val),_).

@@ -32,7 +32,7 @@ quantify(pred(Subj,Op,Head,Args),Above,Right,P) :-
    conc(SQuants,Up,Above),
    chain_apply(Here,(P0,Head,P1),P2),
    op_apply(Op,P2,P).
-quantify(`P,Q,Q,P).
+quantify(~P,Q,Q,P).
 quantify(P&Q,Above,Right,(S,T)) :-
    quantify(Q,Right0,Right,T),
    quantify(P,Above,Right0,S).
@@ -63,11 +63,11 @@ quantify_args([Arg|Args],Quants,(P,Q)) :-
    quantify_args(Args,Quants0,Q),
    quantify(Arg,Quants,Quants0,P).
 
-pre_apply(`Head,set(I),X,P1,P2,Y,Quants,Quant) :-
+pre_apply(~Head,set(I),X,P1,P2,Y,Quants,Quant) :-
    indices(Quants,I,Indices,RestQ),
    chain_apply(RestQ,(Head,P1),P),
    setify(Indices,X,(P,P2),Y,Quant).
-pre_apply(`Head,Det,X,P1,P2,Y,Quants,quant(Det,X,(P,P2),Y)) :-
+pre_apply(~Head,Det,X,P1,P2,Y,Quants,quant(Det,X,(P,P2),Y)) :-
  ( unit_det(Det);
    index_det(Det,_)),
    chain_apply(Quants,(Head,P1),P).
@@ -93,7 +93,7 @@ close_tree(T,P) :-
    quantify(T,Q,[],P0),
    chain_apply(Q,P0,P).
 
-meta_apply(`G,R,Q,G,R,Q).
+meta_apply(~G,R,Q,G,R,Q).
 meta_apply(apply(F,(R,P)),R,Q0,F,true,Q) :-
    but_last(Q0,quant(lambda,Z,P,Z),Q).
 
@@ -123,13 +123,13 @@ index_vars([quant(index(_),_-X,P0,_-X)|Indices],
       [X|IndexV],(P0,P)) :-
    index_vars(Indices,IndexV,P).
 
-complete_aggr([Att,Obj],`G,R,Quants,(P,R),Att,Obj) :-
+complete_aggr([Att,Obj],~G,R,Quants,(P,R),Att,Obj) :-
    chain_apply(Quants,G,P).
 complete_aggr([Att],Head,R0,Quants0,(P1,P2,R),Att,Obj) :-
    meta_apply(Head,R0,Quants0,G,R,Quants),
    set_vars(Quants,Obj,Rest,P2),
    chain_apply(Rest,G,P1).
-complete_aggr([],`G,R,[quant(set,_-(Obj:Att),S:T,_)],
+complete_aggr([],~G,R,[quant(set,_-(Obj:Att),S:T,_)],
       (G,R,S,T),Att,Obj).
 
 set_vars([quant(set,_-(I:X),P:Q,_-X)],[X|I],[],(P,Q)).

@@ -8,7 +8,7 @@
 % Modes
 
 :- mode word(+).
-:- mode `(+).
+:- mode ~(+).
 :- mode conj(+).
 :- mode adverb(+).
 :- mode sup_adj(+,?).
@@ -38,7 +38,7 @@
 % =================================================================
 % General Dictionary
 
-word(Word) :- `(Word).
+word(Word) :- ~(Word).
 word(Word) :- conj(Word).
 word(Word) :- adverb(Word).
 word(Word) :- sup_adj(Word,_).
@@ -59,26 +59,26 @@ word(Word) :- int_art(Word,_,_,_).
 word(Word) :- int_pron(Word,_).
 word(Word) :- loc_pred(Word,_).
 
-`how.
-`whose.
-`there.
-`of.
-`('''').
-`(',').
-`s.
-`than.
-`at.
-`the.
-`not.
-`(as).
-`that.
-`less.
-`more.
-`least.
-`most.
-`many.
-`where.
-`when.
+~how.
+~whose.
+~there.
+~of.
+~('''').
+~(',').
+~s.
+~than.
+~at.
+~the.
+~not.
+~(as).
+~that.
+~less.
+~more.
+~least.
+~most.
+~many.
+~where.
+~when.
 conj(and).
 conj(or).
 
