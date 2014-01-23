@@ -19,6 +19,9 @@
         yesno/1,        yesno__1/1,
         yesno/2,        yesno__2/2]).
 
+:- meta_predicate
+	talk_to_user_while(0).
+
 /*
 :- mode
         ask(+, ?),
@@ -98,7 +101,7 @@ ask__1(Question, Answer) :-
         ttyflush,
         get0(Char),
         ask__1(Char, Question, Answer).
-        
+
 
 ask__1(Char, _, Answer) :-
         Char > 32, Char < 127, !,
@@ -129,7 +132,7 @@ ask__2(Question, Default, Answer) :-
         ttyflush,
         get0(Char),
         ask__2(Char, Question, Default, Answer).
-        
+
 
 ask__2(Char, _, _, Answer) :-
         Char > 32, Char < 127, !,
