@@ -1,8 +1,9 @@
 :- module(gctime,
 	  [ gctime/1,			% :Goal
-	    gctime/3,			% +Name, Times, :Goal
+	    gctime/2,			% :Goal, +Options
 	    gcfile/1			% +File
 	  ]).
+:- use_module(library(option)).
 
 :- dynamic
 	logfile/1.
@@ -11,24 +12,38 @@ gcfile(File) :-
 	retractall(logfile(_)),
 	assert(logfile(File)).
 
-:- module_transparent
-	gctime/1.
+:- meta_predicate
+	gctime(0),
+	gctime(0,+).
 
-%%	gctime(+Test, :Goal) is semidet.
 %%	gctime(:Goal) is semidet.
+%%	gctime(:Goal, +Options) is semidet.
 %
 %	Time the execution of Goal.  Possible choice-points of Goal are
-%	removed.
+%	removed.  Options processed:
+%
+%	  * average(N)
+%	  Average over N runs.  Default 1.
+%	  * name(Test)
+%	  Name printed for the test.  Default is the goal, printed
+%	  using ~p.
+%	  * header(+Boolean)
+%	  * footer(+Boolean)
+%	  Print LaTeX tabular header/footer
 
 gctime(Goal) :-
-	gctime('', 1, Goal).
+	gctime(Goal, []).
 
-gctime(Name, N, Goal0) :-
-	expand_goal(Goal0, Goal),
+gctime(Goal, Options) :-
+	strip_module(Goal, _, PlainGoal),
+	option(average(N), Options, 1),
+	option(name(Name), Options, PlainGoal),
+
 	statistics(atom_garbage_collection, [AGCN0, AGCAtoms0, AGCTime0]),
 	statistics(garbage_collection, [GCN0, GCBytes0, GCTime0, GCLeft0]),
 	get_time(Wall0),
 	statistics(cputime, OldTime),
+	statistics(process_cputime, PCPU0),
 	(   N =:= 1
 	->  (   catch(Goal, E, true)
 	    ->  Result = yes
@@ -37,12 +52,14 @@ gctime(Name, N, Goal0) :-
 	;   forall(between(1, N, _), Goal),
 	    Result = yes
 	),
+	statistics(process_cputime, PCPU1),
 	statistics(cputime, NewTime),
 	get_time(Wall1),
 	statistics(garbage_collection, [GCN1, GCBytes1, GCTime1, GCLeft1]),
 	statistics(atom_garbage_collection, [AGCN1, AGCAtoms1, AGCTime1]),
 	Wall is (Wall1-Wall0)/N,
 	UsedTime is (NewTime - OldTime)/N,
+	PCPU is (PCPU1 - PCPU0)/N,
 	GCN is round((GCN1 - GCN0)/N),
 	_GCBytes is GCBytes1 - GCBytes0,
 	GCTime is (GCTime1 - GCTime0)/(1000*N),
@@ -53,38 +70,35 @@ gctime(Name, N, Goal0) :-
 	AGCN is round((AGCN1-AGCN0)/N),
 	AGCTime is (AGCTime1-AGCTime0)/(1000*N),
 	AGCAtoms is round((AGCAtoms1-AGCAtoms0)/N),
-	title,
-	log('~w & ~3f & ~3f & ~D & ~D & ~3f & ~D & ~D & ~3f',
-	    [ Name, UsedTime, Wall,
+	header(Options),
+	log('~p & ~3f & ~3f & ~3f & ~D & ~D & ~3f & ~D & ~D & ~3f \\\\~n',
+	    [ Name, PCPU, UsedTime, Wall,
 	      GCN, GCAvgLeft, GCTime,
 	      AGCN, AGCAtoms, AGCTime
 	    ]),
-	gc_statistics_(N),
+	footer(Options),
 	(   nonvar(E)
 	->  throw(E)
 	;   Result == yes
 	).
 
-:- if(current_predicate(gc_statistics/1)).
-title :-
-	format('% Test, CPU, Wall, #GC, GC Left, GCTime, \c
-	          #AGC, #Atoms, AGCTime, AvgC, AvgCl, AvgI~n').
+header(Options) :-
+	option(header(true), Options), !,
+	format('\\begin{tabular}{l|rrr|rrr|rrr}~n'),
+	format(' & \\multicolumn{3}{|c|}{\\bf Time} & \c
+	           \\multicolumn{3}{|c|}{\\bf GC} & \c
+		   \\multicolumn{3}{|c}{\\bf Atom GC} \\\\~n'),
+	format('Test & \c
+	        Process & Thread & Wall & \c
+		Times & AvgWorkSet & GCTime & \c
+		Times & Reclaimed & AGCTime \\\\~n'),
+	format('\\hline~n').
+header(_).
 
-gc_statistics_(_N) :-
-	gc_statistics(S),
-	S = gc(Envs, Conts, AltClauses, Instr),
-	AvgC is Conts/Envs,
-	AvgCl is AltClauses/Envs,
-	AvgI is Instr/Conts,
-	log('& ~2f & ~2f & ~2f \\\\~n',
-	    [AvgC, AvgCl, AvgI]).
-:- else.
-title :-
-	format('% Test, CPU, Wall, #GC, GC Left, GCTime, #AGC, #Atoms, AGCTime~n').
-
-gc_statistics_(_) :-
-	log('\\\\~n', []).
-:- endif.
+footer(Options) :-
+	option(footer(true), Options), !,
+	format('\\end{tabular}~n').
+footer(_).
 
 log(Fmt, Args) :-
 	format(Fmt, Args),
