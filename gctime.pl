@@ -32,6 +32,8 @@ gcfile(File) :-
 %	  Print LaTeX tabular header/footer
 %	  * agc(+Boolean)
 %	  Add atom garbage collection statistics (default is =true=).
+%	  * time(Time)
+%	  One of =cpu= or =all= (default).
 
 gctime(Goal) :-
 	gctime(Goal, []).
@@ -73,10 +75,12 @@ gctime(Goal, Options) :-
 	AGCTime is (AGCTime1-AGCTime0)/(1000*N),
 	AGCAtoms is round((AGCAtoms1-AGCAtoms0)/N),
 	header(Options),
-	log('~p & ~3f & ~3f & ~3f & ~D & ~D & ~3f ',
-	    [ Name, PCPU, UsedTime, Wall,
-	      GCN, GCAvgLeft, GCTime
-	    ]),
+	log('~p & ', [Name]),
+	(   option(time(all), Options, all)
+	->  log('~3f & ~3f & ~3f & ', [PCPU, UsedTime, Wall])
+	;   log('~3f & ', [UsedTime])
+	),
+	log('~D & ~D & ~3f ', [ GCN, GCAvgLeft, GCTime ]),
 	(   option(agc(true), Options, true)
 	->  log('& ~D & ~D & ~3f ', [ AGCN, AGCAtoms, AGCTime ])
 	;   true
@@ -90,17 +94,24 @@ gctime(Goal, Options) :-
 
 header(Options) :-
 	option(header(true), Options), !,
-	format('\\begin{tabular}{l|rrr|rrr|rrr}~n'),
-	format(' & \\multicolumn{3}{|c|}{\\bf Time} & \c
-	           \\multicolumn{3}{|c|}{\\bf GC} '),
+	tabular_header(Options),
+	format(' & '),
+	(   option(time(all), Options, all)
+	->  format('\\multicolumn{3}{|c|}{\\bf Time} & ')
+	;   format('& ')
+	),
+	format('\\multicolumn{3}{|c|}{\\bf GC} '),
 	(   option(agc(true), Options, true)
 	->  format('& \\multicolumn{3}{|c}{\\bf Atom GC} ')
 	;   true
 	),
 	format('\\\\~n'),
-	format('Test & \c
-	        Process & Thread & Wall & \c
-		Times & AvgWorkSet & GCTime '),
+	format('Test & '),
+	(   option(time(all), Options, all)
+	->  format('Process & Thread & Wall & ')
+	;   format('CPUTime & ')
+	),
+	format('Times & AvgWorkSet & GCTime '),
 	(   option(agc(true), Options, true)
 	->  format('& Times & Reclaimed & AGCTime ')
 	;   true
@@ -108,6 +119,19 @@ header(Options) :-
 	format('\\\\~n'),
 	format('\\hline~n').
 header(_).
+
+tabular_header(Options) :-
+	format('\\begin{tabular}{l'),
+	(   option(time(all), Options, all)
+	->  format('|rrr')
+	;   format('|r')
+	),
+	format('|rrr'),			% GC columns
+	(   option(agc(true), Options, true)
+	->  format('|rrr')
+	;   true
+	),
+	format('}~n').
 
 footer(Options) :-
 	option(footer(true), Options), !,
