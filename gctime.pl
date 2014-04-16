@@ -30,6 +30,8 @@ gcfile(File) :-
 %	  * header(+Boolean)
 %	  * footer(+Boolean)
 %	  Print LaTeX tabular header/footer
+%	  * agc(+Boolean)
+%	  Add atom garbage collection statistics (default is =true=).
 
 gctime(Goal) :-
 	gctime(Goal, []).
@@ -71,11 +73,15 @@ gctime(Goal, Options) :-
 	AGCTime is (AGCTime1-AGCTime0)/(1000*N),
 	AGCAtoms is round((AGCAtoms1-AGCAtoms0)/N),
 	header(Options),
-	log('~p & ~3f & ~3f & ~3f & ~D & ~D & ~3f & ~D & ~D & ~3f \\\\~n',
+	log('~p & ~3f & ~3f & ~3f & ~D & ~D & ~3f ',
 	    [ Name, PCPU, UsedTime, Wall,
-	      GCN, GCAvgLeft, GCTime,
-	      AGCN, AGCAtoms, AGCTime
+	      GCN, GCAvgLeft, GCTime
 	    ]),
+	(   option(agc(true), Options, true)
+	->  log('& ~D & ~D & ~3f ', [ AGCN, AGCAtoms, AGCTime ])
+	;   true
+	),
+	log('\\\\~n', []),
 	footer(Options),
 	(   nonvar(E)
 	->  throw(E)
@@ -86,12 +92,20 @@ header(Options) :-
 	option(header(true), Options), !,
 	format('\\begin{tabular}{l|rrr|rrr|rrr}~n'),
 	format(' & \\multicolumn{3}{|c|}{\\bf Time} & \c
-	           \\multicolumn{3}{|c|}{\\bf GC} & \c
-		   \\multicolumn{3}{|c}{\\bf Atom GC} \\\\~n'),
+	           \\multicolumn{3}{|c|}{\\bf GC} '),
+	(   option(agc(true), Options, true)
+	->  format('& \\multicolumn{3}{|c}{\\bf Atom GC} ')
+	;   true
+	),
+	format('\\\\~n'),
 	format('Test & \c
 	        Process & Thread & Wall & \c
-		Times & AvgWorkSet & GCTime & \c
-		Times & Reclaimed & AGCTime \\\\~n'),
+		Times & AvgWorkSet & GCTime '),
+	(   option(agc(true), Options, true)
+	->  format('& Times & Reclaimed & AGCTime ')
+	;   true
+	),
+	format('\\\\~n'),
 	format('\\hline~n').
 header(_).
 
