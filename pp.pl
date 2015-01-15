@@ -38,7 +38,7 @@ user:goal_expansion(pp(Term), dump_var(Name, Term)) :-
 	var_property(Term, name(Name)).
 
 pp(Term) :-
-	print_term(Term, []).
+	print_term(Term, [output(user_error)]).
 
 dump_var(Name, Value) :-
 	with_output_to(user_error, dump_var2(Name, Value)).
