@@ -34,7 +34,8 @@
 :- use_module(library(pprint)).
 :- use_module(library(ansi_term)).
 
-user:goal_expansion(pp(Term), dump_var(Name, Term)) :-
+user:goal_expansion(pp(Term), Pos, dump_var(Name, Term), Pos) :-
+%	prolog_load_context(term_position, Start),
 	var_property(Term, name(Name)).
 
 pp(Term) :-
