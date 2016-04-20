@@ -80,7 +80,10 @@ gctime(Goal, Options) :-
 	->  log('~3f & ~3f & ~3f & ', [PCPU, UsedTime, Wall])
 	;   log('~3f & ', [UsedTime])
 	),
-	log('~D & ~D & ~3f ', [ GCN, GCAvgLeft, GCTime ]),
+	(   option(gc(true), Options, true)
+	->  log('~D & ~D & ~3f ', [ GCN, GCAvgLeft, GCTime ])
+	;   true
+	),
 	(   option(agc(true), Options, true)
 	->  log('& ~D & ~D & ~3f ', [ AGCN, AGCAtoms, AGCTime ])
 	;   true
@@ -100,7 +103,10 @@ header(Options) :-
 	->  format('\\multicolumn{3}{|c|}{\\bf Time} & ')
 	;   format('& ')
 	),
-	format('\\multicolumn{3}{|c|}{\\bf GC} '),
+	(   option(gc(true), Options, true)
+	->  format('\\multicolumn{3}{|c|}{\\bf GC} ')
+	;   true
+	),
 	(   option(agc(true), Options, true)
 	->  format('& \\multicolumn{3}{|c}{\\bf Atom GC} ')
 	;   true
@@ -111,7 +117,10 @@ header(Options) :-
 	->  format('Process & Thread & Wall & ')
 	;   format('CPUTime & ')
 	),
-	format('Times & AvgWorkSet & GCTime '),
+	(   option(gc(true), Options, true)
+	->  format('Times & AvgWorkSet & GCTime ')
+	;   true
+	),
 	(   option(agc(true), Options, true)
 	->  format('& Times & Reclaimed & AGCTime ')
 	;   true
@@ -126,7 +135,10 @@ tabular_header(Options) :-
 	->  format('|rrr')
 	;   format('|r')
 	),
-	format('|rrr'),			% GC columns
+	(   option(gc(true), Options, true)
+	->  format('|rrr')			% GC columns
+	;   true
+	),
 	(   option(agc(true), Options, true)
 	->  format('|rrr')
 	;   true
