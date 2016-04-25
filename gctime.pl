@@ -122,7 +122,7 @@ header(Options) :-
 	;   true
 	),
 	(   option(agc(true), Options, true)
-	->  format('& Times & Reclaimed & AGCTime ')
+	->  format('& Times & Rec. bytes & AGCTime ')
 	;   true
 	),
 	format('\\\\~n'),
