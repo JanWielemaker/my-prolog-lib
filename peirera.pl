@@ -4,11 +4,14 @@
 	    list_bench_results/2	% +File, +Id
 	  ]).
 
+:- meta_predicate
+	do_n(+, 0, -).
+
 %%	bench_peirera is det.
 %%	bench_peirera(+SpeedupOrName) is det.
 %
 %	=|?- bench_peirera|= is the same as =|?- bench_peirera(1)|=.
-%	
+%
 %	@param SpeedupOrName If number, run all tests speedup by N; if
 %			     atom, run named test at speddup 1.
 
@@ -33,10 +36,10 @@ list_bench_results(File, Id) :-
 %
 %	Iterations is the number of iterations   to run Benchmark to get
 %	approximately 1 sec CPU time.
-%	
+%
 %	To update, make it  dynamic,  delete   all  clauses  and run the
 %	benchmark. Then list the clauses and insert them below.
-%	
+%
 %	Last update: SWI-Prolog 5.6.59 (gcc:  -O3;   pl:  -O)  on AMD X2
 %	5400+ (64-bits)
 
@@ -154,7 +157,7 @@ get_cpu_time(T) :-
 
 
 %%	bench_time(-Time)
-%	
+%
 %	Time to spend on each benchmark.
 
 bench_time(1).
@@ -190,7 +193,7 @@ bench_mark(Name, NetTime, Speedup) :-
 
 
 %	iterations(+I0, +Name, +Action, -Iterations)
-%	
+%
 %	Learn how many iterations we need for about 1 second CPU time.
 
 iterations(_, Name, _, _, I) :-
@@ -215,7 +218,7 @@ do_n(N, Goal, Time) :-
 	    fail
 	;   get_cpu_time(T1),
 	    Time is (T1 - T0)/1000
-	).	    
+	).
 
 %   repeat(N)
 %   succeeds precisely N times.
