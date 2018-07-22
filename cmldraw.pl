@@ -376,7 +376,7 @@ points(D, TX:int, TY:int, RX:int, RY:int) :->
 :- send(@class, hidden_attribute, radius).
 :- send(@class, part_attribute, arrows, self).
 
-variable(first_diabolo, 	cml_diabolo*, get, "Diabolo at <-start").
+variable(first_diabolo,		cml_diabolo*, get, "Diabolo at <-start").
 variable(second_diabolo,	cml_diabolo*, get, "Diabolo at <-end").
 
 initialise(C, F:graphical, T:graphical, L:[link], FH:[name]*, TH:[name]*) :->
@@ -497,7 +497,8 @@ points(C, SX:int, SY:int, TX:int, TY:int) :->
 :- draw_begin_shape(cml_shape, draw_compound,
 		    "Text with outline", []).
 
-resource(cml_font,	font,	'font(helvetica, roman, 14)').
+class_variable(cml_font,	font,	font(helvetica, roman, 14),
+	       "Default font to use for CML objects").
 
 :- send(@class, part_attribute, pen, outline).
 
@@ -505,7 +506,7 @@ initialise(B) :->
 	"->display_outline and draw a centered text on it"::
 	send(B, send_super, initialise),
 	send(B, display_outline),
-	get(B, resource_value, cml_font, Font),
+	get(B, class_variable_value, cml_font, Font),
 	send(B, display, new(T, draw_text('', center, Font))),
 	send(T, name, text),
 	send(B, recenter).
@@ -575,16 +576,16 @@ fill_menu(FD) :->
 
 					% double link
 	new(L2, link(link)),
-	send(L2, attribute, connection_class, cml_double_connection),
+	send(L2, connection_class, cml_double_connection),
 	send(M, proto, L2, draw_connect, plus),
 	new(DL, link(link)),
-	send(DL, attribute, connection_class, cml_diamond_connection),
+	send(DL, connection_class, cml_diamond_connection),
 	send(M, proto, DL, draw_connect, plus),
 	new(LL, link(link)),
-	send(LL, attribute, connection_class, cml_labeled_connection),
+	send(LL, connection_class, cml_labeled_connection),
 	send(M, proto, LL, draw_connect, plus),
 	new(DBL, link(link)),
-	send(DBL, attribute, connection_class, cml_diabolo_connection),
+	send(DBL, connection_class, cml_diabolo_connection),
 	send(M, proto, DBL, draw_connect, plus).
 
 :- pce_end_class.
