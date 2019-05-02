@@ -14,11 +14,16 @@ tdump(M:Goal) :-
     (   current_table(M:G, Trie),
         '$tbl_table_status'(Trie, Status, Wrapper, Skeleton),
         G = Goal,
-        format('Trie for variant ~p (~p)~n', [Goal, Status]),
+        ansi_format(fg(green), 'Trie for variant ', []),
+        ansi_format(fg(blue),  '~p', [Goal]),
+        ansi_format(fg(green), ' (~p)~n', [Status]),
         Answer = Wrapper,
         findall(Answer-Delay, '$tbl_answer'(Trie, Skeleton, Delay), Pairs),
-        sort(1, @<, Pairs, Sorted),
-        maplist(dump_answer(M), Sorted),
+        (   Pairs == []
+        ->  ansi_format(fg(red), '  (empty)~n', [])
+        ;   sort(1, @<, Pairs, Sorted),
+            maplist(dump_answer(M), Sorted)
+        ),
         fail
     ;   true
     ).
@@ -31,7 +36,7 @@ dump_answer(M, Answer0-Condition) :-
     unqualify(Answer0, M, Answer),
     unqualify(Condition, M, SimpleCondition),
     format('  ~p', [Answer]),
-    ansi_format(bold, ' IF ', []),
+    ansi_format(bold, ' :- ', []),
     ansi_format(fg(cyan), '~p~n', [SimpleCondition]).
 
 unqualify((A0,B0), M, (A,B)) :-
