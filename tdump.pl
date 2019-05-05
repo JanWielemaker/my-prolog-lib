@@ -15,7 +15,9 @@ tdump(M:Goal) :-
         '$tbl_table_status'(Trie, Status, Wrapper, Skeleton),
         G = Goal,
         ansi_format(fg(green), 'Trie for variant ', []),
-        ansi_format(fg(blue),  '~p', [Goal]),
+        \+ \+ ( numbervars(Goal, 0, _),
+                ansi_format(fg(blue),  '~p', [Goal])
+              ),
         ansi_format(fg(green), ' (~p)~n', [Status]),
         Answer = Wrapper,
         findall(Answer-Delay, '$tbl_answer'(Trie, Skeleton, Delay), Pairs),
@@ -35,9 +37,11 @@ dump_answer(M, Answer0-true) :-
 dump_answer(M, Answer0-Condition) :-
     unqualify(Answer0, M, Answer),
     unqualify(Condition, M, SimpleCondition),
-    format('  ~p', [Answer]),
-    ansi_format(bold, ' :- ', []),
-    ansi_format(fg(cyan), '~p~n', [SimpleCondition]).
+    \+ \+ ( numbervars(Answer+SimpleCondition, 0, _),
+            format('  ~p', [Answer]),
+            ansi_format(bold, ' :- ', []),
+            ansi_format(fg(cyan), '~p~n', [SimpleCondition])
+          ).
 
 unqualify((A0,B0), M, (A,B)) :-
     !,
