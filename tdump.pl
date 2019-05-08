@@ -11,12 +11,12 @@
 %   Dump all tables and their status that _unify_ with Goal.
 
 tdump(M:Goal) :-
-    (   current_table(M:G, Trie),
+    (   '$tbl_variant_table'(VariantTrie),
+        trie_gen(VariantTrie, M:Goal, Trie),
         '$tbl_table_status'(Trie, Status, Wrapper, Skeleton),
-        G = Goal,
         ansi_format(fg(green), 'Trie for variant ', []),
-        \+ \+ ( numbervars(Goal, 0, _),
-                ansi_format(fg(blue),  '~p', [Goal])
+        \+ \+ ( numbervars(Wrapper, 0, _),
+                ansi_format(fg(blue),  '~p', [Wrapper])
               ),
         ansi_format(fg(green), ' (~p)~n', [Status]),
         Answer = Wrapper,
