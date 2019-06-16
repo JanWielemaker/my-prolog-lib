@@ -13,13 +13,13 @@ for details.  To find this directory on Windows, use
 If GIT is installed in `%PATH%`, you can also run the installation from
 Prolog using the following command:
 
-    ?- expand_file_name('~/lib', Dir),
+    ?- expand_file_name('~/lib', [Dir]),
        make_directory_path(Dir),
        git([ clone,
-	     'https://github.com/JanWielemaker/my-prolog-lib',
+             'https://github.com/JanWielemaker/my-prolog-lib',
              prolog
-	   ],
-	   [ directory(Dir)
+           ],
+           [ directory(Dir)
            ]).
 
 Finally, create an  index  for  the   library  to  make  all  predicates
@@ -27,8 +27,8 @@ available as _autoloadable_:
 
     ?- make_library_index('~/lib/prolog').
 
-After this you should have access to utilities such as pp/1 that is a
-shorthand for print_term/2, e.g.
+Now restart Prolog and you should have access to utilities such as pp/1
+that is a shorthand for print_term/2, e.g.
 
     ?- pp('Hello world').
     'Hello world'
