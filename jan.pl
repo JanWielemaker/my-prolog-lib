@@ -9,7 +9,6 @@
 :- module(jan,
 	[ son/0,			% System mode
 	  soff/0,			% User mode
-	  la/0,				% List active
 	  listpreds/1,			% +Condition
 	  usage/1,			% print time and heapusage
 	  pprof/1,			% Pentium Profile (VMI)
@@ -40,17 +39,6 @@ son :-
 	set_prolog_flag(access_level, system).
 soff :-
 	set_prolog_flag(access_level, user).
-
-la :-
-	'$style_check'(O, O),
-	style_check(+dollar),
-	(   predicate_property(M:H, references(Refs)),
-	    \+ predicate_property(M:H, imported_from(_)),
-	    functor(H, N, A),
-	    format('    ~w:~w/~d: ~d references~n', [M, N, A, Refs]),
-	    fail
-	;   '$style_check'(_, O)
-	).
 
 system_list_undefined :-
 	current_prolog_flag(access_level, Old),
