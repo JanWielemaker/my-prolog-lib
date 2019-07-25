@@ -14,15 +14,15 @@ tdump(M:Goal) :-
     (   '$tbl_variant_table'(VariantTrie),
         trie_gen(VariantTrie, M:Goal, Trie),
         '$tbl_table_status'(Trie, Status, Wrapper, Skeleton),
-        ansi_format(fg(green), 'Trie for variant ', []),
+        ansi_format(comment, 'Trie for variant ', []),
         \+ \+ ( numbervars(Wrapper, 0, _),
-                ansi_format(fg(blue),  '~p', [Wrapper])
+                ansi_format(code,  '~p', [Wrapper])
               ),
-        ansi_format(fg(green), ' (~p)~n', [Status]),
+        ansi_format(comment, ' (~p)~n', [Status]),
         Answer = Wrapper,
         findall(Answer-Delay, '$tbl_answer'(Trie, Skeleton, Delay), Pairs),
         (   Pairs == []
-        ->  ansi_format(fg(red), '  (empty)~n', [])
+        ->  ansi_format(warning, '  (empty)~n', [])
         ;   sort(1, @<, Pairs, Sorted),
             maplist(dump_answer(M), Sorted)
         ),
