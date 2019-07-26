@@ -1,7 +1,10 @@
 :- module(table_utils,
-          [ tdump/1
+          [ tdump/1,                            % ?Goal
+            idg/0
           ]).
 :- use_module(library(apply)).
+:- use_module(library(ansi_term)).
+:- use_module(library(varnumbers)).
 
 :- meta_predicate
     tdump(:).
@@ -57,3 +60,29 @@ unqualify(tnot(A0), M, tnot(A)) :-
 unqualify(M:G, M, G) :-
     !.
 unqualify(G, _, G).
+
+%!  idg
+%
+%   Dump the incremental dependency graph.
+
+idg :-
+    ansi_format(comment, '% Node1 [falsecount] (affects -->) Node1 [falsecount]~n', []),
+    forall(idg((_:From)+FFC, affected, (_:To)+TFC),
+           \+ \+ ( numbervars(From),
+                   numbervars(To),
+                   format('  ~p [~D] --> ~p [~D]~n', [From, FFC, To, TFC])
+                 )).
+
+idg(From+FFC, Dir, To+TFC) :-
+    '$tbl_variant_table'(VTrie),
+    trie_gen(VTrie, From, ATrie),
+    fc(ATrie, FFC),
+    '$idg_edge'(ATrie, Dir, DepTrie),
+    fc(DepTrie, TFC),
+    '$tbl_table_status'(DepTrie, _Status, To, _Return).
+
+fc(ATrie, FC) :-
+    (   '$idg_falsecount'(ATrie, FC0)
+    ->  FC = FC0
+    ;   FC = 0
+    ).
