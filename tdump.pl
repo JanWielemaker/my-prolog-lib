@@ -1,27 +1,44 @@
 :- module(table_utils,
-          [ tdump/1,                            % ?Goal
+          [ tdump/1,                            % :Goal
+            tdump/2,                            % :Goal, +Options
             idg/0
           ]).
 :- use_module(library(apply)).
+:- use_module(library(option)).
 :- use_module(library(ansi_term)).
 :- use_module(library(varnumbers)).
 
 :- meta_predicate
-    tdump(:).
+    tdump(:),
+    tdump(:, +).
 
-%!  tdump(:Goal)
+%!  tdump(:Goal) is det.
+%!  tdump(:Goal, +Options) is det.
 %
-%   Dump all tables and their status that _unify_ with Goal.
+%   Dump all tables and their status that _unify_ with Goal.  Options:
+%
+%     - scope(Scope)
+%       Limit displayed tables to `local` or `global`.
+%     - reset(Boolean)
+%       If `true`, also show reset (fresh) global tables.  These
+%       are tables that have been abolished.
 
 tdump(M:Goal) :-
-    (   '$tbl_variant_table'(VariantTrie),
-        trie_gen(VariantTrie, M:Goal, Trie),
+    tdump(M:Goal, []).
+
+tdump(M:Goal, Options) :-
+    option(scope(Scope), Options, _),
+    (   table(Scope, M:Goal, Trie),
         '$tbl_table_status'(Trie, Status, Wrapper, Skeleton),
+        (   option(reset(true), Options)
+        ->  true
+        ;   \+ (Scope == global, Status == fresh)
+        ),
         ansi_format(comment, 'Trie for variant ', []),
         \+ \+ ( numbervars(Wrapper, 0, _),
                 ansi_format(code,  '~p', [Wrapper])
               ),
-        ansi_format(comment, ' (~p)~n', [Status]),
+        ansi_format(comment, ' (~p, ~p)~n', [Scope, Status]),
         Answer = Wrapper,
         findall(Answer-Delay, '$tbl_answer'(Trie, Skeleton, Delay), Pairs),
         (   Pairs == []
@@ -32,6 +49,14 @@ tdump(M:Goal) :-
         fail
     ;   true
     ).
+
+table(local, Variant, Trie) :-
+    '$tbl_local_variant_table'(VariantTrie),
+    trie_gen(VariantTrie, Variant, Trie).
+table(global, Variant, Trie) :-
+    '$tbl_global_variant_table'(VariantTrie),
+    trie_gen(VariantTrie, Variant, Trie).
+
 
 dump_answer(M, Answer0-true) :-
     !,
