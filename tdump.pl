@@ -1,5 +1,6 @@
 :- module(table_utils,
-          [ tdump/1,                            % :Goal
+          [ tdump/0,
+            tdump/1,                            % :Goal
             tdump/2,                            % :Goal, +Options
             idg/0
           ]).
@@ -12,6 +13,7 @@
     tdump(:),
     tdump(:, +).
 
+%!  tdump is det.
 %!  tdump(:Goal) is det.
 %!  tdump(:Goal, +Options) is det.
 %
@@ -23,6 +25,8 @@
 %       If `true`, also show reset (fresh) global tables.  These
 %       are tables that have been abolished.
 
+tdump :-
+    tdump(_:_).
 tdump(M:Goal) :-
     tdump(M:Goal, []).
 
