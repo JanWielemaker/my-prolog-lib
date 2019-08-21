@@ -95,12 +95,29 @@ unqualify(G, _, G).
 %   Dump the incremental dependency graph.
 
 idg :-
-    ansi_format(comment, '% Node1 [falsecount] (affects -->) Node1 [falsecount]~n', []),
+    ansi_format(comment,
+                '% Node1 [falsecount] (affects -->) Node1 [falsecount]~n', []),
     forall(idg((_:From)+FFC, affected, (_:To)+TFC),
            \+ \+ ( numbervars(From),
                    numbervars(To),
-                   format('  ~p [~D] --> ~p [~D]~n', [From, FFC, To, TFC])
+                   print_edge(From, FFC, To, TFC)
                  )).
+
+print_edge(From, FFC, To, TFC) :-
+    format('  '),
+    print_node(From, FFC),
+    format(' --> '),
+    print_node(To, TFC),
+    nl.
+
+print_node(Variant, Falsecount) :-
+    ansi_format(code, '~p', [Variant]),
+    format(' '),
+    (   Falsecount == 0
+    ->  ansi_format(comment, '[0]', [])
+    ;   ansi_format([bg(red),fg(white)], '[~D]', [Falsecount])
+    ).
+
 
 idg(From+FFC, Dir, To+TFC) :-
     '$tbl_variant_table'(VTrie),
