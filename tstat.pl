@@ -1,29 +1,42 @@
 :- module(tstat,
           [ table_statistics/0,
+            table_statistics/1,			% ?Variant
+            table_statistics_by_predicate/0,
             table_statistics/2,                 % ?Stat, -Value
-            tstat/2                             % ?Stat, ?Top
+            table_statistics/3,                 % ?Variant, ?Stat, -Value
+            tstat/2,                            % ?Stat, ?Top
+            tstat/3                             % ?Variant, ?Stat, ?Top
           ]).
 :- use_module(library(error)).
 :- use_module(library(aggregate)).
 :- use_module(library(solution_sequences)).
 
+:- meta_predicate
+    table_statistics(:),
+    table_statistics(:, ?, -),
+    tstat(:, ?, ?).
 
 table_statistics(Stat, Value) :-
+    table_statistics(_:_, Stat, Value).
+
+table_statistics(Variant, Stat, Value) :-
     (   var(Stat)
-    ->  table_statistics_(Stat, Value)
-    ;   table_statistics_(Stat, Value)
+    ->  table_statistics_(Variant, Stat, Value)
+    ;   table_statistics_(Variant, Stat, Value)
     ->  true
     ).
 
-table_statistics_(tables, NTables) :-
-    aggregate_all(count, current_table(_:_, _), NTables).
-table_statistics_(Stat, Total) :-
+table_statistics_(Variant, tables, NTables) :-
+    aggregate_all(count, table(Variant, _), NTables).
+table_statistics_(Variant, Stat, Total) :-
     variant_trie_stat(Stat, _What),
     Stat \== variables,
-    aggregate_all(sum(Count), variant_stat(Stat, _Variant, Count), Total).
+    aggregate_all(sum(Count), variant_stat(Stat, Variant, Count), Total).
 
 table_statistics :-
-    forall(table_statistics(Stat, Value),
+    table_statistics(_:_).
+table_statistics(Variant) :-
+    forall(table_statistics(Variant, Stat, Value),
            ( variant_trie_stat0(Stat, What),
              format('~w ~`.t ~D~50|~n', [What, Value]))).
 
@@ -31,11 +44,27 @@ variant_trie_stat0(tables, "Total #tables").
 variant_trie_stat0(Stat, What) :-
     variant_trie_stat(Stat, What).
 
+table_statistics_by_predicate :-
+    Pred = M:Head,
+    (   predicate_property(Pred, tabled(_)),
+        \+ predicate_property(Pred, imported_from(_)),
+        \+ \+ table(Pred, _),
+        functor(Head, Name, Arity),
+        format('~n~`\u2015t~50|~n', []),
+        format('~t~p~t~50|~n', [M:Name/Arity]),
+        format('~`\u2015t~50|~n', []),
+        table_statistics(Pred),
+        fail
+    ;   true
+    ).
+
 tstat(Stat, Top) :-
+    tstat(_:_, Stat, Top).
+tstat(Variant, Stat, Top) :-
     variant_trie_stat(Stat, What),
     top(Top, Count, Limit, Dir, Order),
-    findall(V-Count,
-            limit(Limit, order_by([Order], variant_stat(Stat, V, Count))),
+    findall(Variant-Count,
+            limit(Limit, order_by([Order], variant_stat(Stat, Variant, Count))),
             Pairs),
     write_variant_table('~w ~w count per variant'-[Dir, What], Pairs).
 
@@ -48,8 +77,7 @@ top(Top, Var, Limit, "Bottom", asc(Var)) :-
 
 variant_stat(Stat, V, Count) :-
     variant_trie_stat(Stat, _, Count, Property),
-    V = _:_,
-    current_table(V, T),
+    table(V, T),
     atrie_prop(T, Property).
 
 atrie_prop(T, size(Bytes)) :-
@@ -98,3 +126,7 @@ write_variant_stat(W, V-Stat) :-
     \+ \+ ( numbervars(V, 0, _, [singletons(true)]),
             format('~p ~`.t ~D~*|~n', [V, Stat, W])
           ).
+
+table(M:Variant, Trie) :-
+    '$tbl_variant_table'(VariantTrie),
+    trie_gen(VariantTrie, M:Variant, Trie).
