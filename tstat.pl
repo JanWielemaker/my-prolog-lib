@@ -104,11 +104,11 @@ variant_trie_stat(Stat, What) :-
     ;   domain_error(tstat_key, Stat)
     ).
 
-variant_trie_stat(answers,        "answer",                Count, value_count(Count)).
+variant_trie_stat(answers,        "answers",               Count, value_count(Count)).
+variant_trie_stat(lookup,         "lookups",               Count, lookup_count(Count)).
+variant_trie_stat(gen(call),      "generate calls",        Count, gen_call_count(Count)).
 variant_trie_stat(space,          "memory usage",          Bytes, size(Bytes)).
 variant_trie_stat(compiled_space, "compiled memory usage", Bytes, compiled_size(Bytes)).
-variant_trie_stat(lookup,         "trie_lookup call",      Count, lookup_count(Count)).
-variant_trie_stat(gen(call),      "trie_gen call",         Count, gen_call_count(Count)).
 variant_trie_stat(variables,      "variant vars",          Count, variables(Count)).
 
 %!  write_variant_table(+Title, +Pairs)
