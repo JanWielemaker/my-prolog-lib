@@ -34,29 +34,67 @@ table_statistics_(Variant, Stat, Total) :-
     aggregate_all(sum(Count), variant_stat(Stat, Variant, Count), Total).
 
 table_statistics :-
+    (   (   '$tbl_global_variant_table'(Table),
+            call_table_properties(shared, Table)
+        ;   '$tbl_local_variant_table'(Table),
+            call_table_properties(private, Table)
+        ),
+        fail
+    ;   true
+    ),
     table_statistics(_:_).
-table_statistics(Variant) :-
-    forall(table_statistics(Variant, Stat, Value),
-           ( variant_trie_stat0(Stat, What),
-             format('~w ~`.t ~D~50|~n', [What, Value]))).
 
-variant_trie_stat0(tables, "Total #tables").
+table_statistics(Variant) :-
+    (   table_statistics(Variant, Stat, Value),
+        variant_trie_stat0(Stat, What),
+        format('~w ~`.t ~D~50|~n', [What, Value]),
+        fail
+    ;   true
+    ).
+
+variant_trie_stat0(tables, "Total #tables") :- !, fail.
 variant_trie_stat0(Stat, What) :-
     variant_trie_stat(Stat, What).
 
+call_table_properties(Which, Trie) :-
+    format('~w tables~n', [Which]),
+    (   call_trie_property_name(P, Label, Value),
+        trie_property(Trie, P),
+        format('  ~w ~`.t ~D~50|~n', [Label, Value]),
+        fail
+    ;   true
+    ).
+
+call_trie_property_name(value_count(N), '# tables', N).
+call_trie_property_name(size(N),        'memory',   N).
+
 table_statistics_by_predicate :-
     Pred = M:Head,
-    (   predicate_property(Pred, tabled(_)),
+    (   predicate_property(Pred, tabled),
         \+ predicate_property(Pred, imported_from(_)),
         \+ \+ table(Pred, _),
+        tflags(Pred, Flags),
         functor(Head, Name, Arity),
         format('~n~`\u2015t~50|~n', []),
-        format('~t~p~t~50|~n', [M:Name/Arity]),
+        format('~t~p~t~w~50|~n', [M:Name/Arity, Flags]),
         format('~`\u2015t~50|~n', []),
         table_statistics(Pred),
         fail
     ;   true
     ).
+
+tflags(Pred, Flags) :-
+    findall(F, tflag(Pred, F), List),
+    atomic_list_concat(List, Flags).
+
+tflag(Pred, Flag) :-
+    predicate_property(Pred, tabled(How)),
+    tflag_name(How, Flag).
+
+tflag_name(variant,     'V').
+tflag_name(subsumptive, 'S').
+tflag_name(shared,      'G').
+tflag_name(incremental, 'I').
 
 tstat(Stat, Top) :-
     tstat(_:_, Stat, Top).
