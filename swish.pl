@@ -2,4 +2,5 @@
 	  [ swish/0,
 	    swish/1
 	  ]).
-:- use_module('/home/janw/src/prolog/swish/ide').
+:- expand_file_name('$HOME/src/prolog/swish/ide.pl', File),
+   use_module(File).
