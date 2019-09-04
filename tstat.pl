@@ -16,6 +16,36 @@
     table_statistics(:, ?, -),
     tstat(:, ?, ?).
 
+%!  table_statistics(?Stat, -Value) is nondet.
+%!  table_statistics(?Variant, ?Stat, -Value) is nondet.
+%
+%   Give summary statistics for the tables  associated with all subgoals
+%   of Variant. The table_statistics/2 version considers all tables.
+%
+%   The values for Stat are:
+%
+%     - tables
+%       Total number of answer tries
+%     - answers
+%       Total number of answers in the combined tries
+%     - duplicate_ratio
+%       Ratio of generated (and thus ignored) duplicate answers.
+%       `1` means no duplicates.  `2` means for every answer there
+%       was (on everage) a duplicate generated.
+%     - space_ratio
+%       Number of nodes with a value divided by the total number
+%       of nodes in a trie.  The maximum is `1`.  A low number
+%       implies that a large amount of differently shaped data
+%       is included in the answer tries.
+%     - gen(call)
+%       Number of times answers are generated from a completed
+%       table, i.e., times answers are _reused_.
+%     - space
+%       Summed memory usage of the answer tries in bytes.
+%     - compiled_space
+%       Summed size for the compiled representation of completed
+%       tables.
+
 table_statistics(Stat, Value) :-
     table_statistics(_:_, Stat, Value).
 
@@ -31,7 +61,24 @@ table_statistics_(Variant, tables, NTables) :-
 table_statistics_(Variant, Stat, Total) :-
     variant_trie_stat(Stat, _What),
     Stat \== variables,
-    aggregate_all(sum(Count), variant_stat(Stat, Variant, Count), Total).
+    Stat \== lookup,
+    (   avg(Stat)
+    ->  aggregate_all(sum(Ratio)+count,
+                      variant_stat(Stat, Variant, Ratio),
+                      Sum+Count),
+        Count > 0,
+        Total is Sum/Count
+    ;   aggregate_all(sum(Count), variant_stat(Stat, Variant, Count), Total)
+    ).
+
+avg(space_ratio).
+avg(duplicate_ratio).
+
+%!  table_statistics
+%
+%   Print a summary of statistics relevant to tabling.
+%
+%   @see table_statistics/2 for an explanation
 
 table_statistics :-
     (   (   '$tbl_global_variant_table'(Table),
@@ -44,10 +91,20 @@ table_statistics :-
     ),
     table_statistics(_:_).
 
+%!  table_statistics(:Variant)
+%
+%   Print a summary for the statistics  of   all  tables for subgoals of
+%   Variant. See table_statistics/2 for an explanation.
+
 table_statistics(Variant) :-
+    ansi_format([bold], 'Summary of answer trie statistics:', []),
+    nl,
     (   table_statistics(Variant, Stat, Value),
         variant_trie_stat0(Stat, What),
-        format('~w ~`.t ~D~50|~n', [What, Value]),
+        (   integer(Value)
+        ->  format('  ~w ~`.t ~D~50|~n', [What, Value])
+        ;   format('  ~w ~`.t ~2f~50|~n', [What, Value])
+        ),
         fail
     ;   true
     ).
@@ -57,16 +114,25 @@ variant_trie_stat0(Stat, What) :-
     variant_trie_stat(Stat, What).
 
 call_table_properties(Which, Trie) :-
-    format('~w tables~n', [Which]),
+    ansi_format([bold], 'Statistics for ~w call trie:', [Which]),
+    nl,
     (   call_trie_property_name(P, Label, Value),
-        trie_property(Trie, P),
-        format('  ~w ~`.t ~D~50|~n', [Label, Value]),
+        atrie_prop(Trie, P),
+        (   integer(Value)
+        ->  format('  ~w ~`.t ~D~50|~n', [Label, Value])
+        ;   format('  ~w ~`.t ~1f~50|~n', [Label, Value])
+        ),
         fail
     ;   true
     ).
 
-call_trie_property_name(value_count(N), '# tables', N).
-call_trie_property_name(size(N),        'memory',   N).
+call_trie_property_name(value_count(N), 'Number of tables',     N).
+call_trie_property_name(size(N),        'Memory for call trie', N).
+call_trie_property_name(space_ratio(N), 'Space efficiency',     N).
+
+%!  table_statistics_by_predicate
+%
+%   Print statistics on memory usage and lookups per predicate.
 
 table_statistics_by_predicate :-
     Pred = M:Head,
@@ -96,6 +162,41 @@ tflag_name(subsumptive, 'S').
 tflag_name(shared,      'G').
 tflag_name(incremental, 'I').
 
+%!  tstat(?Value, ?Top).
+%!  tstat(?Variant, ?Value, ?Top).
+%
+%   Print the top-N (for positive Top)   or  bottom-N (for negative Top)
+%   for `Stat` for  all  tabled  subgoals   of  Variant  (or  all tabled
+%   subgoals for tstat/2).  Stat is one of
+%
+%     - answers
+%     - duplicate_ratio
+%     - space_ratio
+%     - gen(call)
+%     - space
+%     - compiled_space
+%       See table_statistics/2.
+%     - variables
+%       The number of variables in the variant.  The tabling logic
+%       adds a term ret(...) to the table for each answer, where each
+%       variable is an argument of the ret(...) term.  The arguments
+%       are placed in depth-first lef-right order they appear in the
+%       variant.  Optimal behaviour of the trie is achieved if the
+%       variance is as much as possible to the rightmost arguments.
+%       Poor allocation shows up as a low `space_ratio` statistics.
+%
+%   Below are some examples
+
+%     - Find the tables with poor space behaviour (bad)
+%
+%           ?- tstat(space_ratio, -10).
+%
+%     - Find the tables with a high number of duplicates (good, but
+%       if the number of duplicates can easily be reduced a lot it
+%       makes your code faster):
+%
+%           ?- tstat(duplicate_ratio, 10).
+
 tstat(Stat, Top) :-
     tstat(_:_, Stat, Top).
 tstat(Variant, Stat, Top) :-
@@ -124,8 +225,17 @@ atrie_prop(T, compiled_size(Bytes)) :-
     '$trie_property'(T, compiled_size(Bytes)).
 atrie_prop(T, value_count(Count)) :-
     '$trie_property'(T, value_count(Count)).
+atrie_prop(T, space_ratio(Values/Nodes)) :-
+    '$trie_property'(T, value_count(Values)),
+    Values > 0,
+    '$trie_property'(T, node_count(Nodes)).
 atrie_prop(T, lookup_count(Count)) :-
     '$trie_property'(T, lookup_count(Count)).
+atrie_prop(T, duplicate_ratio(Ratio)) :-
+    '$trie_property'(T, value_count(Values)),
+    Values > 0,
+    '$trie_property'(T, lookup_count(Lookup)),
+    Ratio is (Lookup - Values)/Values.
 atrie_prop(T, gen_call_count(Count)) :-
     '$trie_property'(T, gen_call_count(Count)).
 atrie_prop(T, gen_fail_count(Count)) :-
@@ -142,12 +252,20 @@ variant_trie_stat(Stat, What) :-
     ;   domain_error(tstat_key, Stat)
     ).
 
-variant_trie_stat(answers,        "answers",               Count, value_count(Count)).
-variant_trie_stat(lookup,         "lookups",               Count, lookup_count(Count)).
-variant_trie_stat(gen(call),      "generate calls",        Count, gen_call_count(Count)).
-variant_trie_stat(space,          "memory usage",          Bytes, size(Bytes)).
-variant_trie_stat(compiled_space, "compiled memory usage", Bytes, compiled_size(Bytes)).
-variant_trie_stat(variables,      "variant vars",          Count, variables(Count)).
+variant_trie_stat(answers,        "Number of answers",
+                  Count, value_count(Count)).
+variant_trie_stat(duplicate_ratio,"Duplicate answer ratio",
+                  Ratio, duplicate_ratio(Ratio)).
+variant_trie_stat(space_ratio,    "Space efficiency",
+                  Ratio, space_ratio(Ratio)).
+variant_trie_stat(gen(call),      "Calls to completed tables",
+                  Count, gen_call_count(Count)).
+variant_trie_stat(space,          "Memory usage for call trie",
+                  Bytes, size(Bytes)).
+variant_trie_stat(compiled_space, "Compiled memory usage for call tries",
+                  Bytes, compiled_size(Bytes)).
+variant_trie_stat(variables,      "Number of variables in answer skeletons",
+                  Count, variables(Count)).
 
 %!  write_variant_table(+Title, +Pairs)
 
@@ -162,7 +280,10 @@ write_variant_table(Format-Args, Pairs) :-
 
 write_variant_stat(W, V-Stat) :-
     \+ \+ ( numbervars(V, 0, _, [singletons(true)]),
-            format('~p ~`.t ~D~*|~n', [V, Stat, W])
+            (   integer(Stat)
+            ->  format('~p ~`.t ~D~*|~n', [V, Stat, W])
+            ;   format('~p ~`.t ~2f~*|~n', [V, Stat, W])
+            )
           ).
 
 table(M:Variant, Trie) :-
