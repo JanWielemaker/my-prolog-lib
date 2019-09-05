@@ -2,16 +2,21 @@
           [ tdump/0,
             tdump/1,                            % :Goal
             tdump/2,                            % :Goal, +Options
-            idg/0
+            idg/0,
+            summarize_idg/0,
+            summarize_idg/1                     % +Top
           ]).
 :- use_module(library(apply)).
 :- use_module(library(option)).
 :- use_module(library(ansi_term)).
 :- use_module(library(varnumbers)).
+:- use_module(library(solution_sequences)).
+:- use_module(library(aggregate)).
 
 :- meta_predicate
     tdump(:),
-    tdump(:, +).
+    tdump(:, +),
+    summarize_idg(:).
 
 %!  tdump is det.
 %!  tdump(:Goal) is det.
@@ -132,3 +137,77 @@ fc(ATrie, FC) :-
     ->  FC = FC0
     ;   FC = 0
     ).
+
+%!  summarize_idg is det.
+%!  summarize_idg(+TopN) is det.
+%
+%   Implements XSB's statistics(summarize_idg)
+
+:- module_transparent
+    summarize_idg/0.
+
+summarize_idg :-
+    context_module(M),
+    summarize_idg(infinite, M).
+
+summarize_idg(M:Top) :-
+    summarize_idg(Top, M).
+
+summarize_idg(Top, M) :-
+    tty_width(Width),
+    header('Interior Nodes (Tabled Subgoals)', Width),
+    format('Predicate~t #idg nodes~*|~n', [Width]),
+    format('~`\u2015t~*|~n', [Width]),
+    forall(limit(Top,
+                 order_by([desc(Count),asc(PI)],
+                          interior_nodes(_:_, M, PI, Count))),
+           format('~q ~`.t ~D~*|~n', [PI, Count, Width])),
+    nl,
+    ColR is Width - 10,
+    header('Leaf Nodes (Calls to Dynamic Predicates)', Width),
+    format('Predicate~t #idg nodes~*|~t#facts~*|~n', [ColR, Width]),
+    format('~`\u2015t~*|~n', [Width]),
+    forall(limit(Top,
+                 order_by([desc(Count),desc(Facts),asc(PI)],
+                          leaf_nodes(_:_, M, PI, Count, Facts))),
+           format('~q ~`.t ~D~*| ~`.t ~D~*|~n',
+                  [PI, Count, ColR, Facts, Width])).
+
+interior_nodes(Variant, M, PI, Count) :-
+    predicate_property(Variant, tabled(incremental)),
+    \+ predicate_property(Variant, imported_from(_)),
+    idg_node_count(Variant, Count),
+    pi_head(QPI, Variant),
+    unqualify_pi(QPI, M, PI).
+
+leaf_nodes(Variant, M, PI, Count, Facts) :-
+    predicate_property(Variant, dynamic),
+    predicate_property(Variant, incremental),
+    \+ predicate_property(Variant, imported_from(_)),
+    predicate_property(Variant, number_of_clauses(Facts)),
+    idg_node_count(Variant, Count),
+    pi_head(QPI, Variant),
+    unqualify_pi(QPI, M, PI).
+
+
+idg_node_count(Variant, Count) :-
+    aggregate_all(count,
+                  ( '$tbl_variant_table'(VTrie),
+                    trie_gen(VTrie, Variant, _ATrie)
+                  ),
+                  Count).
+
+unqualify_pi(M:PI, M, PI) :- !.
+unqualify_pi(PI, _, PI).
+
+tty_width(W) :-
+    catch(tty_size(_, TtyW), _, fail),
+    !,
+    W is max(60, TtyW - 8).
+tty_width(60).
+
+header(Title, Width) :-
+    format('~N~`\u2015t~*|~n', [Width]),
+    ansi_format([bold], '~t~w~t~*|', [Title,Width]),
+    nl.
+
