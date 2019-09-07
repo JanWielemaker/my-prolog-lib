@@ -7,6 +7,7 @@
             tstat/2,                            % ?Stat, ?Top
             tstat/3                             % ?Variant, ?Stat, ?Top
           ]).
+:- use_module(library(option)).
 :- use_module(library(error)).
 :- use_module(library(aggregate)).
 :- use_module(library(solution_sequences)).
@@ -15,6 +16,8 @@
     table_statistics(:),
     table_statistics(:, ?, -),
     tstat(:, ?, ?).
+
+summary_table_width(55).
 
 %!  table_statistics(?Stat, -Value) is nondet.
 %!  table_statistics(?Variant, ?Stat, -Value) is nondet.
@@ -89,7 +92,9 @@ table_statistics :-
         fail
     ;   true
     ),
-    table_statistics(_:_).
+    ansi_format([bold], 'Summary of answer trie statistics:', []),
+    nl,
+    table_statistics_(_:_, [tables(false)]).
 
 %!  table_statistics(:Variant)
 %
@@ -97,30 +102,37 @@ table_statistics :-
 %   Variant. See table_statistics/2 for an explanation.
 
 table_statistics(Variant) :-
-    ansi_format([bold], 'Summary of answer trie statistics:', []),
-    nl,
+    table_statistics_(Variant, []).
+
+table_statistics_(Variant, Options) :-
+    summary_table_width(Width),
+    (   option(tables(false), Options)
+    ->  dif(Stat, tables)
+    ;   true
+    ),
     (   table_statistics(Variant, Stat, Value),
         variant_trie_stat0(Stat, What),
         (   integer(Value)
-        ->  format('  ~w ~`.t ~D~50|~n', [What, Value])
-        ;   format('  ~w ~`.t ~2f~50|~n', [What, Value])
+        ->  format('  ~w ~`.t ~D~*|~n', [What, Value, Width])
+        ;   format('  ~w ~`.t ~2f~*|~n', [What, Value, Width])
         ),
         fail
     ;   true
     ).
 
-variant_trie_stat0(tables, "Total #tables") :- !, fail.
+variant_trie_stat0(tables, "Answer tables") :- !.
 variant_trie_stat0(Stat, What) :-
     variant_trie_stat(Stat, What).
 
 call_table_properties(Which, Trie) :-
     ansi_format([bold], 'Statistics for ~w call trie:', [Which]),
     nl,
+    summary_table_width(Width),
     (   call_trie_property_name(P, Label, Value),
         atrie_prop(Trie, P),
         (   integer(Value)
-        ->  format('  ~w ~`.t ~D~50|~n', [Label, Value])
-        ;   format('  ~w ~`.t ~1f~50|~n', [Label, Value])
+        ->  format('  ~w ~`.t ~D~*|~n', [Label, Value, Width])
+        ;   format('  ~w ~`.t ~1f~*|~n', [Label, Value, Width])
         ),
         fail
     ;   true
@@ -135,15 +147,16 @@ call_trie_property_name(space_ratio(N), 'Space efficiency',     N).
 %   Print statistics on memory usage and lookups per predicate.
 
 table_statistics_by_predicate :-
+    summary_table_width(Width),
     Pred = M:Head,
     (   predicate_property(Pred, tabled),
         \+ predicate_property(Pred, imported_from(_)),
         \+ \+ table(Pred, _),
         tflags(Pred, Flags),
         functor(Head, Name, Arity),
-        format('~n~`\u2015t~50|~n', []),
-        format('~t~p~t~w~50|~n', [M:Name/Arity, Flags]),
-        format('~`\u2015t~50|~n', []),
+        format('~n~`\u2015t~*|~n', [Width]),
+        format('~t~p~t~w~*|~n', [M:Name/Arity, Flags, Width]),
+        format('~`\u2015t~*|~n', [Width]),
         table_statistics(Pred),
         fail
     ;   true
@@ -262,7 +275,7 @@ variant_trie_stat(gen(call),      "Calls to completed tables",
                   Count, gen_call_count(Count)).
 variant_trie_stat(space,          "Memory usage for call trie",
                   Bytes, size(Bytes)).
-variant_trie_stat(compiled_space, "Compiled memory usage for call tries",
+variant_trie_stat(compiled_space, "Memory usage for compiled call tries",
                   Bytes, compiled_size(Bytes)).
 variant_trie_stat(variables,      "Number of variables in answer skeletons",
                   Count, variables(Count)).
