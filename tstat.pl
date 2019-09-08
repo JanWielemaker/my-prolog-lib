@@ -2,6 +2,7 @@
           [ table_statistics/0,
             table_statistics/1,			% ?Variant
             table_statistics_by_predicate/0,
+            table_statistics_by_predicate/1,	% +Options
             table_statistics/2,                 % ?Stat, -Value
             table_statistics/3,                 % ?Variant, ?Stat, -Value
             tstat/2,                            % ?Stat, ?Top
@@ -40,7 +41,7 @@ summary_table_width(55).
 %       of nodes in a trie.  The maximum is `1`.  A low number
 %       implies that a large amount of differently shaped data
 %       is included in the answer tries.
-%     - gen(call)
+%     - complete_call
 %       Number of times answers are generated from a completed
 %       table, i.e., times answers are _reused_.
 %     - space
@@ -105,13 +106,26 @@ table_statistics(Variant) :-
     table_statistics_(Variant, []).
 
 table_statistics_(Variant, Options) :-
-    summary_table_width(Width),
+    table_statistics_dict(Variant, Dict),
+    print_table_statistics(Dict, Options).
+
+table_statistics_dict(Variant, Dict) :-
+    findall(Stat-Value, table_statistics(Variant, Stat, Value), Pairs),
+    dict_create(Dict, table_stat, [variant-Variant|Pairs]).
+
+print_table_statistics(Dict, Options) :-
+    summary_table_width(DefWidth),
+    option(width(Width), Options, DefWidth),
     (   option(tables(false), Options)
     ->  dif(Stat, tables)
     ;   true
     ),
-    (   table_statistics(Variant, Stat, Value),
-        variant_trie_stat0(Stat, What),
+    (   option(header(true), Options)
+    ->  print_table_predicate_header(Dict.variant, [width(Width)|Options])
+    ;   true
+    ),
+    (   variant_trie_stat0(Stat, What),
+        Value = Dict.get(Stat),
         (   integer(Value)
         ->  format('  ~w ~`.t ~D~*|~n', [What, Value, Width])
         ;   format('  ~w ~`.t ~2f~*|~n', [What, Value, Width])
@@ -120,8 +134,32 @@ table_statistics_(Variant, Options) :-
     ;   true
     ).
 
-variant_trie_stat0(tables, "Answer tables") :- !.
+print_table_predicate_header(Pred, Options) :-
+    option(width(Width), Options),
+    Pred = M:Head,
+    tflags(Pred, Flags),
+    functor(Head, Name, Arity),
+    format('~n~`\u2015t~*|~n', [Width]),
+    format('~t~p~t~w~*|~n', [M:Name/Arity, Flags, Width]),
+    format('~`\u2015t~*|~n', [Width]).
+
+tflags(Pred, Flags) :-
+    findall(F, tflag(Pred, F), List),
+    atomic_list_concat(List, Flags).
+
+tflag(Pred, Flag) :-
+    predicate_property(Pred, tabled(How)),
+    tflag_name(How, Flag).
+
+tflag_name(variant,     'V').
+tflag_name(subsumptive, 'S').
+tflag_name(shared,      'G').
+tflag_name(incremental, 'I').
+
+
+variant_trie_stat0(tables, "Answer tables").
 variant_trie_stat0(Stat, What) :-
+    dif(Stat, tables),
     variant_trie_stat(Stat, What).
 
 call_table_properties(Which, Trie) :-
@@ -142,38 +180,51 @@ call_trie_property_name(value_count(N), 'Number of tables',     N).
 call_trie_property_name(size(N),        'Memory for call trie', N).
 call_trie_property_name(space_ratio(N), 'Space efficiency',     N).
 
-%!  table_statistics_by_predicate
+%!  table_statistics_by_predicate is det.
+%!  table_statistics_by_predicate(+Options) is det.
 %
-%   Print statistics on memory usage and lookups per predicate.
+%   Print statistics on memory usage  and   lookups  per  predicate. The
+%   version without options  dumps  all   predicates  without  ordering.
+%   Options:
+%
+%     - order_by(+Key)
+%       Order the predicates according to Key. Default is `tables`, the
+%       number of answer tables.  See table_statistics/2 for a list
+%       of values for Key.
+%     - top(N)
+%       Only show the top N predicates.
+%     - module(Module)
+%       Limit the results to predicates of the given module.
 
 table_statistics_by_predicate :-
+    Pred = _:_,
     summary_table_width(Width),
-    Pred = M:Head,
-    (   predicate_property(Pred, tabled),
-        \+ predicate_property(Pred, imported_from(_)),
-        \+ \+ table(Pred, _),
-        tflags(Pred, Flags),
-        functor(Head, Name, Arity),
-        format('~n~`\u2015t~*|~n', [Width]),
-        format('~t~p~t~w~*|~n', [M:Name/Arity, Flags, Width]),
-        format('~`\u2015t~*|~n', [Width]),
+    (   tabled_predicate_with_tables(Pred),
+        print_table_predicate_header(Pred, Width),
         table_statistics(Pred),
         fail
     ;   true
     ).
 
-tflags(Pred, Flags) :-
-    findall(F, tflag(Pred, F), List),
-    atomic_list_concat(List, Flags).
+table_statistics_by_predicate(Options) :-
+    option(order_by(Order), Options, tables),
+    option(top(Top), Options, infinite),
+    option(module(M), Options, _),
+    Pred = (M:_),
+    findall(Dict,
+            (  tabled_predicate_with_tables(Pred),
+               table_statistics_dict(Pred, Dict)
+            ),
+            Dicts),
+    sort(Order, @>=, Dicts, Sorted),
+    forall(limit(Top, member(Dict, Sorted)),
+           print_table_statistics(Dict, [header(true)|Options])).
 
-tflag(Pred, Flag) :-
-    predicate_property(Pred, tabled(How)),
-    tflag_name(How, Flag).
-
-tflag_name(variant,     'V').
-tflag_name(subsumptive, 'S').
-tflag_name(shared,      'G').
-tflag_name(incremental, 'I').
+tabled_predicate_with_tables(Pred) :-
+    Pred = _:_,
+    predicate_property(Pred, tabled),
+    \+ predicate_property(Pred, imported_from(_)),
+    \+ \+ table(Pred, _).
 
 %!  tstat(?Value, ?Top).
 %!  tstat(?Variant, ?Value, ?Top).
@@ -271,11 +322,11 @@ variant_trie_stat(duplicate_ratio,"Duplicate answer ratio",
                   Ratio, duplicate_ratio(Ratio)).
 variant_trie_stat(space_ratio,    "Space efficiency",
                   Ratio, space_ratio(Ratio)).
-variant_trie_stat(gen(call),      "Calls to completed tables",
+variant_trie_stat(complete_call,  "Calls to completed tables",
                   Count, gen_call_count(Count)).
-variant_trie_stat(space,          "Memory usage for call trie",
+variant_trie_stat(space,          "Memory usage for answer tables",
                   Bytes, size(Bytes)).
-variant_trie_stat(compiled_space, "Memory usage for compiled call tries",
+variant_trie_stat(compiled_space, "Memory usage for compiled answer tables",
                   Bytes, compiled_size(Bytes)).
 variant_trie_stat(variables,      "Number of variables in answer skeletons",
                   Count, variables(Count)).
