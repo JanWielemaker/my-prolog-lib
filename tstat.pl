@@ -70,8 +70,7 @@ table_statistics_(Variant, tables, NTables) :-
     aggregate_all(count, table(Variant, _), NTables).
 table_statistics_(Variant, Stat, Total) :-
     variant_trie_stat(Stat, _What),
-    Stat \== variables,
-    Stat \== lookup,
+    \+ hidden_stat(Stat, Variant),
     (   avg(Stat)
     ->  aggregate_all(sum(Ratio)+count,
                       variant_stat(Stat, Variant, Ratio),
@@ -80,6 +79,15 @@ table_statistics_(Variant, Stat, Total) :-
         Total is Sum/Count
     ;   aggregate_all(sum(Count), variant_stat(Stat, Variant, Count), Total)
     ).
+
+hidden_stat(variables, _).
+hidden_stat(lookup, _).
+hidden_stat(invaldated, Variant) :-
+    callable(Variant),
+    \+ predicate_property(Variant, tabled(incremental)).
+hidden_stat(reevaluated, Variant) :-
+    callable(Variant),
+    \+ predicate_property(Variant, tabled(incremental)).
 
 avg(space_ratio).
 avg(duplicate_ratio).
@@ -213,7 +221,7 @@ table_statistics_by_predicate :-
     ).
 
 table_statistics_by_predicate(Options) :-
-    option(order_by(Order), Options, tables),
+    option(order_by(OrderBy), Options, tables),
     option(top(Top), Options, infinite),
     option(module(M), Options, _),
     Pred = (M:_),
@@ -222,9 +230,19 @@ table_statistics_by_predicate(Options) :-
                table_statistics_dict(Pred, Dict)
             ),
             Dicts),
-    sort(Order, @>=, Dicts, Sorted),
-    forall(limit(Top, member(Dict, Sorted)),
+    exclude(has_no_key(OrderBy), Dicts, Dicts1),
+    (   integer(Top), Top < 0
+    ->  Order = @=<,
+        TopN is -Top
+    ;   Order = @>=,
+        TopN is Top
+    ),
+    sort(OrderBy, Order, Dicts1, Sorted),
+    forall(limit(TopN, member(Dict, Sorted)),
            print_table_statistics(Dict, [header(true)|Options])).
+
+has_no_key(Key, Dict) :-
+    \+ _ = Dict.get(Key).
 
 tabled_predicate_with_tables(Pred) :-
     Pred = _:_,
@@ -309,15 +327,9 @@ atrie_prop(T, duplicate_ratio(Ratio)) :-
 atrie_prop(T, gen_call_count(Count)) :-
     '$trie_property'(T, gen_call_count(Count)).
 atrie_prop(T, invalidated(Count)) :-
-    (   '$trie_property'(T, invalidated(Count))
-    ->  true
-    ;   Count = 0
-    ).
+    '$trie_property'(T, invalidated(Count)).
 atrie_prop(T, reevaluated(Count)) :-
-    (   '$trie_property'(T, reevaluated(Count))
-    ->  true
-    ;   Count = 0
-    ).
+    '$trie_property'(T, reevaluated(Count)).
 atrie_prop(T, variables(Count)) :-
     '$tbl_table_status'(T, _Status, _Wrapper, Skeleton),
     functor(Skeleton, ret, Count).
@@ -353,9 +365,9 @@ write_variant_table(Format-Args, Pairs) :-
     format(string(Title), Format, Args),
     tty_size(_, Cols),
     W is Cols - 8,
-    format('~`-t~*|~n', [W]),
+    format('~`\u2015t~*|~n', [W]),
     format('~t~w~t~*|~n', [Title, W]),
-    format('~`-t~*|~n', [W]),
+    format('~`\u2015t~*|~n', [W]),
     maplist(write_variant_stat(W), Pairs).
 
 write_variant_stat(W, V-Stat) :-
