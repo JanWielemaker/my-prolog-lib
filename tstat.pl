@@ -44,6 +44,12 @@ summary_table_width(55).
 %     - complete_call
 %       Number of times answers are generated from a completed
 %       table, i.e., times answers are _reused_.
+%     - invalidated
+%       Number of times an incremental table was invaldated.
+%     - reevaluated
+%       Number of times an invaldated table wa reevaluated.  If
+%       lower than `invaldated` this implies that dependent nodes
+%       of the IDG were reevaluated to the same answer set.
 %     - space
 %       Summed memory usage of the answer tries in bytes.
 %     - compiled_space
@@ -200,7 +206,7 @@ table_statistics_by_predicate :-
     Pred = _:_,
     summary_table_width(Width),
     (   tabled_predicate_with_tables(Pred),
-        print_table_predicate_header(Pred, Width),
+        print_table_predicate_header(Pred, [width(Width)]),
         table_statistics(Pred),
         fail
     ;   true
@@ -302,10 +308,16 @@ atrie_prop(T, duplicate_ratio(Ratio)) :-
     Ratio is (Lookup - Values)/Values.
 atrie_prop(T, gen_call_count(Count)) :-
     '$trie_property'(T, gen_call_count(Count)).
-atrie_prop(T, gen_fail_count(Count)) :-
-    '$trie_property'(T, gen_fail_count(Count)).
-atrie_prop(T, gen_exit_count(Count)) :-
-    '$trie_property'(T, gen_exit_count(Count)).
+atrie_prop(T, invalidated(Count)) :-
+    (   '$trie_property'(T, invalidated(Count))
+    ->  true
+    ;   Count = 0
+    ).
+atrie_prop(T, reevaluated(Count)) :-
+    (   '$trie_property'(T, reevaluated(Count))
+    ->  true
+    ;   Count = 0
+    ).
 atrie_prop(T, variables(Count)) :-
     '$tbl_table_status'(T, _Status, _Wrapper, Skeleton),
     functor(Skeleton, ret, Count).
@@ -324,6 +336,10 @@ variant_trie_stat(space_ratio,    "Space efficiency",
                   Ratio, space_ratio(Ratio)).
 variant_trie_stat(complete_call,  "Calls to completed tables",
                   Count, gen_call_count(Count)).
+variant_trie_stat(invalidated,    "Times the tables were invalidated",
+                  Count, invalidated(Count)).
+variant_trie_stat(reevaluated,    "Times the tables were reevaluated",
+                  Count, reevaluated(Count)).
 variant_trie_stat(space,          "Memory usage for answer tables",
                   Bytes, size(Bytes)).
 variant_trie_stat(compiled_space, "Memory usage for compiled answer tables",
