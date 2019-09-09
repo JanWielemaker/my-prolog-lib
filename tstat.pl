@@ -68,6 +68,12 @@ table_statistics(Variant, Stat, Value) :-
 
 table_statistics_(Variant, tables, NTables) :-
     aggregate_all(count, table(Variant, _), NTables).
+table_statistics_(Variant, invalid, NTables) :-
+    aggregate_all(count,
+                  ( table(Variant, ATrie),
+                    '$idg_falsecount'(ATrie, FC),
+                    FC > 0
+                  ), NTables).
 table_statistics_(Variant, Stat, Total) :-
     variant_trie_stat(Stat, _What),
     \+ hidden_stat(Stat, Variant),
