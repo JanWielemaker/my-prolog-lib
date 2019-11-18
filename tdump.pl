@@ -6,7 +6,7 @@
             summarize_idg/0,
             summarize_idg/1                     % +Top
           ]).
-:- use_module(library(apply)).
+:- use_module(library(lists)).
 :- use_module(library(option)).
 :- use_module(library(ansi_term)).
 :- use_module(library(varnumbers)).
@@ -26,6 +26,8 @@
 %
 %     - scope(Scope)
 %       Limit displayed tables to `local` or `global`.
+%     - limit(Count)
+%       Limit the number of answers displayed to Count
 %     - reset(Boolean)
 %       If `true`, also show reset (fresh) global tables.  These
 %       are tables that have been abolished.
@@ -37,6 +39,7 @@ tdump(M:Goal) :-
 
 tdump(M:Goal, Options) :-
     option(scope(Scope), Options, _),
+    option(limit(Limit), Options, 100),
     (   table(Scope, M:Goal, Trie),
         '$tbl_table_status'(Trie, Status, Wrapper, Skeleton),
         (   option(reset(true), Options)
@@ -47,13 +50,15 @@ tdump(M:Goal, Options) :-
         \+ \+ ( numbervars(Wrapper, 0, _),
                 ansi_format(code,  '~p', [Wrapper])
               ),
-        ansi_format(comment, ' (~p, ~p)~n', [Scope, Status]),
         Answer = Wrapper,
         findall(Answer-Delay, '$tbl_answer'(Trie, Skeleton, Delay), Pairs),
-        (   Pairs == []
+        sort(1, @<, Pairs, Sorted),
+        length(Sorted, Count),
+        ansi_format(comment, ' (~p, ~p, ~D answers)~n', [Scope, Status, Count]),
+        (   Count == 0
         ->  ansi_format(warning, '  (empty)~n', [])
-        ;   sort(1, @<, Pairs, Sorted),
-            maplist(dump_answer(M), Sorted)
+        ;   forall(limit(Limit, member(Ans, Sorted)),
+                   dump_answer(M, Ans))
         ),
         fail
     ;   true
@@ -80,6 +85,9 @@ dump_answer(M, Answer0-Condition) :-
             ansi_format(fg(cyan), '~p~n', [SimpleCondition])
           ).
 
+unqualify(Var, _M, Var) :-
+    var(Var),
+    !.
 unqualify((A0,B0), M, (A,B)) :-
     !,
     unqualify(A0, M, A),
