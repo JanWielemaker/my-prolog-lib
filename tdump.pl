@@ -75,7 +75,9 @@ table(global, Variant, Trie) :-
 dump_answer(M, Answer0-true) :-
     !,
     unqualify(Answer0, M, Answer),
-    format('  ~p~n', [Answer]).
+    \+ \+ ( numbervars(Answer, 0, _),
+            format('  ~p~n', [Answer])
+          ).
 dump_answer(M, Answer0-Condition) :-
     unqualify(Answer0, M, Answer),
     unqualify(Condition, M, SimpleCondition),
