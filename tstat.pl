@@ -264,6 +264,11 @@ tabled_predicate_with_tables(Pred) :-
 %     - space
 %     - compiled_space
 %       See table_statistics/2.
+%     - deadlock
+%       Times this table was involved in a deadlock (cycle of threads
+%       waiting for each others table to complete)
+%     - wait
+%       Times a thread waited for this table.
 %     - variables
 %       The number of variables in the variant.  The tabling logic
 %       adds a term ret(...) to the table for each answer, where each
@@ -330,6 +335,12 @@ atrie_prop(T, invalidated(Count)) :-
     '$trie_property'(T, invalidated(Count)).
 atrie_prop(T, reevaluated(Count)) :-
     '$trie_property'(T, reevaluated(Count)).
+atrie_prop(T, deadlock(Count)) :-
+    '$trie_property'(T, deadlock(Count)),
+    Count > 0.
+atrie_prop(T, wait(Count)) :-
+    '$trie_property'(T, wait(Count)),
+    Count > 0.
 atrie_prop(T, variables(Count)) :-
     '$tbl_table_status'(T, _Status, _Wrapper, Skeleton),
     functor(Skeleton, ret, Count).
@@ -358,6 +369,10 @@ variant_trie_stat(compiled_space, "Memory usage for compiled answer tables",
                   Bytes, compiled_size(Bytes)).
 variant_trie_stat(variables,      "Number of variables in answer skeletons",
                   Count, variables(Count)).
+variant_trie_stat(wait,		  "Times table was waited for",
+                  Count, wait(Count)).
+variant_trie_stat(deadlock,	  "Times table was involved in a deadlock",
+                  Count, deadlock(Count)).
 
 %!  write_variant_table(+Title, +Pairs)
 
