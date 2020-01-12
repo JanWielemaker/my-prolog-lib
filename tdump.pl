@@ -41,20 +41,31 @@ tdump(M:Goal, Options) :-
     option(scope(Scope), Options, _),
     option(limit(Limit), Options, 100),
     (   table(Scope, M:Goal, Trie),
-        '$tbl_table_status'(Trie, Status, Wrapper, Skeleton),
+        '$tbl_table_status'(Trie, Status, M:Variant, Skeleton),
+        M:'$table_mode'(Head0, Variant, Moded),
+        Head = M:Head0,
         (   option(reset(true), Options)
         ->  true
         ;   \+ (Scope == global, Status == fresh)
         ),
         ansi_format(comment, 'Trie for variant ', []),
-        \+ \+ ( numbervars(Wrapper, 0, _),
-                ansi_format(code,  '~p', [Wrapper])
+        \+ \+ ( numbervars(Head, 0, _),
+                ansi_format(code,  '~p', [Head])
               ),
-        Answer = Wrapper,
-        findall(Answer-Delay, '$tbl_answer'(Trie, Skeleton, Delay), Pairs),
+        Answer = Head,
+        '$tbl_trienode'(Reserved),
+        (   Moded == Reserved
+        ->  findall(Answer-Delay,
+                    '$tbl_answer'(Trie, Skeleton, Delay), Pairs),
+            ExtraProp = ''
+        ;   findall(Answer-Delay,
+                    '$tbl_answer'(Trie, Skeleton, Moded, Delay), Pairs),
+            ExtraProp = 'moded, '
+        ),
         sort(1, @<, Pairs, Sorted),
         length(Sorted, Count),
-        ansi_format(comment, ' (~p, ~p, ~D answers)~n', [Scope, Status, Count]),
+        ansi_format(comment, ' (~p, ~p, ~w~D answers)~n',
+                    [Scope, Status, ExtraProp, Count]),
         (   Count == 0
         ->  ansi_format(warning, '  (empty)~n', [])
         ;   forall(limit(Limit, member(Ans, Sorted)),
