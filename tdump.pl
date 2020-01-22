@@ -112,6 +112,10 @@ unqualify((A0;B0), M, (A;B)) :-
 unqualify(tnot(A0), M, tnot(A)) :-
     !,
     unqualify(A0, M, A).
+unqualify((M1:Variant)/ModeArgs, M, Goal) :-
+    !,
+    M1:'$table_mode'(G0, Variant, ModeArgs),
+    unqualify(M1:G0, M, Goal).
 unqualify(M:G, M, G) :-
     !.
 unqualify(G, _, G).
