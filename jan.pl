@@ -7,19 +7,22 @@
 */
 
 :- module(jan,
-	[ son/0,			% System mode
-	  soff/0,			% User mode
-	  listpreds/1,			% +Condition
-	  usage/1,			% print time and heapusage
-	  pprof/1,			% Pentium Profile (VMI)
-	  lsfd/0,			% List file descriptors
-	  nav/0,			% Navigator
-	  tmon/0,			% Thread monitor
-	  dbg/0,			% Graphical debugger front-end
-	  tserv/0,			% Start server
-	  system_list_undefined/0	% List all undefined predicates
-	]).
-:- use_module(library(dcg/basics)).
+	  [ son/0,			% System mode
+	    soff/0,			% User mode
+	    listpreds/1,		% +Condition
+	    usage/1,			% print time and heapusage
+	    lsfd/0,			% List file descriptors
+	    nav/0,			% Navigator
+	    tmon/0,			% Thread monitor
+	    dbg/0,			% Graphical debugger front-end
+	    tserv/0,			% Start server
+	    system_list_undefined/0	% List all undefined predicates
+	  ]).
+:- autoload(library(check),[list_undefined/1]).
+:- autoload(library(prolog_server),[prolog_server/2]).
+:- autoload(library(readutil),[read_line_to_codes/2]).
+:- autoload(library(swi_ide),[prolog_ide/1]).
+:- autoload(library(dcg/basics),[number/3,whites/2]).
 
 %%	lsfd
 %
@@ -81,8 +84,7 @@ listpreds(Cond) :-
 		 *******************************/
 
 :- meta_predicate
-	usage(0),
-	pprof(0).
+	usage(0).
 
 usage(Goal) :-
 	resident_memory(RSS0),
@@ -138,19 +140,6 @@ resident_memory(Mem) :-
 	    close(In)),
 	phrase((number(_),whites,number(MemPages)), Codes, _),
 	Mem is MemPages*4096.			% page size
-
-
-:- if(current_predicate(reset_pentium_profile/0)).
-pprof(Goal) :-
-	reset_pentium_profile,
-	usage_call(Goal, Result),
-	show_pentium_profile,
-	report_result(Result).
-:- else.
-pprof(_Goal) :-
-	print_message(error,
-		      format('Not compiled with pentium profile support', [])).
-:- endif.
 
 nav :-
 	call(prolog_ide(open_navigator)).
