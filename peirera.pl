@@ -2114,6 +2114,10 @@ bench_mark(double_setof, 100, setof((X,S), setof(Y, pr(X, Y), S), T),
                        dummy(S, setof(Y, pr(X, Y), S), T)).
 bench_mark(bagof, 1000, bagof(X, Y^pr(X, Y), S), dummy(X, Y^pr(X, Y), S)).
 
+:- if(current_prolog_flag(version_data, yap(_,_,_,_))).
+user:pr(X,Y) :- pr(X,Y).
+:- endif.
+
 pr(99, 1).
 pr(98, 2).
 pr(97, 3).
