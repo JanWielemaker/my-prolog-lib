@@ -4,6 +4,22 @@
 	    list_bench_results/2	% +File, +Id
 	  ]).
 
+/** <module> Peirera benchmark suite
+
+This suite contains a number of  tests   that  test specific issues of a
+Prolog implementation.  Changes:
+
+  - Ported to SWI-Prolog
+  - Added loop calibration
+  - Updated `shallow_backtracking` and `deep_backtracking` to avoid
+    using 2nd argument indexing (and thus not benchmarking backtracking)
+  - Added `if_then_else` test.
+
+The copyright of this file  is  with   many  authors  and the license is
+completely unclear.  The code has been published on the internet several
+times in various reincarnations.
+*/
+
 :- meta_predicate
 	do_n(+, 0, -).
 
@@ -40,45 +56,45 @@ list_bench_results(File, Id) :-
 %	To update, make it  dynamic,  delete   all  clauses  and run the
 %	benchmark. Then list the clauses and insert them below.
 %
-%	Last update: SWI-Prolog 5.6.59 (gcc:  -O3;   pl:  -O)  on AMD X2
-%	5400+ (64-bits)
+%	Last update: SWI-Prolog 8.3.5 (gcc 9.3, PGO compiled) on AMD 3950X
 
 :- dynamic saved_iterations/2.
 
-saved_iterations(tail_call_atom_atom, 145946).
-saved_iterations(binary_call_atom_atom, 94737).
-saved_iterations(cons_list, 91525).
-saved_iterations(walk_list, 122727).
-saved_iterations(walk_list_rec, 125581).
-saved_iterations(args(1), 120000).
-saved_iterations(args(2), 81818).
-saved_iterations(args(4), 54545).
-saved_iterations(args(8), 33333).
-saved_iterations(args(16), 19355).
-saved_iterations(cons_term, 84375).
-saved_iterations(walk_term, 110204).
-saved_iterations(walk_term_rec, 122727).
-saved_iterations(shallow_backtracking, 415385).
-saved_iterations(deep_backtracking, 59341).
-saved_iterations(choice_point, 94737).
-saved_iterations(trail_variables, 87097).
-saved_iterations(medium_unify, 771429).
-saved_iterations(deep_unify, 235161).
-saved_iterations(integer_add, 49091).
-saved_iterations(floating_add, 40909).
-saved_iterations(arg(1), 40000).
-saved_iterations(arg(2), 40909).
-saved_iterations(arg(4), 37500).
-saved_iterations(arg(8), 38217).
-saved_iterations(arg(16), 38298).
-saved_iterations(index, 100000).
-saved_iterations(assert_unit, 1525).
-saved_iterations(access_unit, 26471).
-saved_iterations(slow_access_unit, 1607).
-saved_iterations(setof, 7692).
-saved_iterations(pair_setof, 6522).
-saved_iterations(double_setof, 1837).
-saved_iterations(bagof, 10112).
+saved_iterations(tail_call_atom_atom,1107062).
+saved_iterations(binary_call_atom_atom,691323).
+saved_iterations(cons_list,696275).
+saved_iterations(walk_list,819562).
+saved_iterations(walk_list_rec,858657).
+saved_iterations(args(1),846690).
+saved_iterations(args(2),564460).
+saved_iterations(args(4),334021).
+saved_iterations(args(8),166154).
+saved_iterations(args(16),67754).
+saved_iterations(cons_term,636126).
+saved_iterations(walk_term,799342).
+saved_iterations(walk_term_rec,568421).
+saved_iterations(shallow_backtracking,658537).
+saved_iterations(deep_backtracking,323353).
+saved_iterations(choice_point,325956).
+saved_iterations(trail_variables,342495).
+saved_iterations(medium_unify,3582310).
+saved_iterations(deep_unify,733893).
+saved_iterations(integer_add,279954).
+saved_iterations(floating_add,200993).
+saved_iterations(arg(1),279793).
+saved_iterations(arg(2),277397).
+saved_iterations(arg(4),278830).
+saved_iterations(arg(8),279310).
+saved_iterations(arg(16),220109).
+saved_iterations(index,391304).
+saved_iterations(if_then_else,1596350).
+saved_iterations(assert_unit,3614).
+saved_iterations(access_unit,176087).
+saved_iterations(slow_access_unit,175663).
+saved_iterations(setof,71053).
+saved_iterations(pair_setof,47788).
+saved_iterations(double_setof,9794).
+saved_iterations(bagof,100872).
 
 /*
 Pereira`s Benchmarks
@@ -813,108 +829,108 @@ bench_mark(deep_backtracking, 2000, deep, dummy).
 
 % :- public deep/0.
 
-shallow :- b(_X, 100).
+shallow :- b(10, 100).
 deep :- b(_X, Y), Y = 100.
 
-b(_X, 1).
-b(_X, 2).
-b(_X, 3).
-b(_X, 4).
-b(_X, 5).
-b(_X, 6).
-b(_X, 7).
-b(_X, 8).
-b(_X, 9).
-b(_X, 10).
-b(_X, 11).
-b(_X, 12).
-b(_X, 13).
-b(_X, 14).
-b(_X, 15).
-b(_X, 16).
-b(_X, 17).
-b(_X, 18).
-b(_X, 19).
-b(_X, 20).
-b(_X, 21).
-b(_X, 22).
-b(_X, 23).
-b(_X, 24).
-b(_X, 25).
-b(_X, 26).
-b(_X, 27).
-b(_X, 28).
-b(_X, 29).
-b(_X, 30).
-b(_X, 31).
-b(_X, 32).
-b(_X, 33).
-b(_X, 34).
-b(_X, 35).
-b(_X, 36).
-b(_X, 37).
-b(_X, 38).
-b(_X, 39).
-b(_X, 40).
-b(_X, 41).
-b(_X, 42).
-b(_X, 43).
-b(_X, 44).
-b(_X, 45).
-b(_X, 46).
-b(_X, 47).
-b(_X, 48).
-b(_X, 49).
-b(_X, 50).
-b(_X, 51).
-b(_X, 52).
-b(_X, 53).
-b(_X, 54).
-b(_X, 55).
-b(_X, 56).
-b(_X, 57).
-b(_X, 58).
-b(_X, 59).
-b(_X, 60).
-b(_X, 61).
-b(_X, 62).
-b(_X, 63).
-b(_X, 64).
-b(_X, 65).
-b(_X, 66).
-b(_X, 67).
-b(_X, 68).
-b(_X, 69).
-b(_X, 70).
-b(_X, 71).
-b(_X, 72).
-b(_X, 73).
-b(_X, 74).
-b(_X, 75).
-b(_X, 76).
-b(_X, 77).
-b(_X, 78).
-b(_X, 79).
-b(_X, 80).
-b(_X, 81).
-b(_X, 82).
-b(_X, 83).
-b(_X, 84).
-b(_X, 85).
-b(_X, 86).
-b(_X, 87).
-b(_X, 88).
-b(_X, 89).
-b(_X, 90).
-b(_X, 91).
-b(_X, 92).
-b(_X, 93).
-b(_X, 94).
-b(_X, 95).
-b(_X, 96).
-b(_X, 97).
-b(_X, 98).
-b(_X, 99).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
+b(X, X).
 b(_X, 100).
 
 
@@ -1839,211 +1855,317 @@ ix(9801) :- ix(9604).
 ix(10000) :- ix(9801).
 
 % JW: test if-then-else.
-%bench_mark(if_then_else, 100, or, true).
+bench_mark(if_then_else, 100, or, dummy_or).
 
 or :-
-	(   fail
+	X = 0,
+	Y = 1,
+	(   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
-	;   fail
+	;   X = Y
 	->  true
 	;   true
 	).
+
+dummy_or :-
+	X = 0,
+	Y = 0,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y,
+	X = Y.
 
 % 19. Make 1000 asserts of unit clauses
 bench_mark(assert_unit, 100, assert_clauses(L), dummy(L)) :-
@@ -2065,8 +2187,11 @@ assert_clauses([Clause|Rest]) :-
 
 % 20. Access 100 dynamically-created clauses with 1st arg. instantiated
 
+:- dynamic
+	dix/2.
+
 bench_mark(access_unit, 1000, access_dix(1, 1), dummy(1, 1)) :-
-   abolish(dix, 2),
+   retractall(dix(_,_)),
    dix_clauses(1, 100, L),
    assert_clauses(L).
 
@@ -2093,7 +2218,7 @@ access_dix(Start, End) :-
 % :- public access_back/2.
 
 bench_mark(slow_access_unit, 100, access_back(1, 1), dummy(1, 1)) :-
-   abolish(dix, 2),
+   retractall(dix(_,_)),
    dix_clauses(1, 100, L),
    assert_clauses(L).
 
