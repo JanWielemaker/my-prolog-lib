@@ -41,13 +41,13 @@ bench_peirera(SpeedupOrName) :-
 	).
 
 list_bench_results(File, Id) :-
-	open(File, write, Out),
-	(   bench_result(Name, NetTime),
-	    format(Out, 'bench_result(~q, ~q, ~q).~n', [Id, Name, NetTime]),
-	    fail
-	;   close(Out)
-	).
-
+	findall(row(Id,NameA,NetTimeF),
+		( bench_result(Name, NetTime),
+		  term_to_atom(Name, NameA),
+		  NetTimeF is float(NetTime)
+		),
+		Data),
+	csv_write_file(File, Data).
 
 %%	saved_iterations(+Benchmark, -Iterations)
 %
