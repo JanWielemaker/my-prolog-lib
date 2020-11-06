@@ -49,6 +49,8 @@ tdump(M:Goal, Options) :-
         ;   \+ (Scope == global, Status == fresh)
         ),
         ansi_format(comment, 'Trie for variant ', []),
+        pflags(Variant, Flags),
+        format('~s ', [Flags]),
         \+ \+ ( numbervars(Head, 0, _),
                 ansi_format(code,  '~p', [Head])
               ),
@@ -141,6 +143,8 @@ print_edge(From, FFC, To, TFC) :-
     nl.
 
 print_node(Variant, Falsecount) :-
+    pflags(Variant, Flags),
+    format('~s ', [Flags]),
     ansi_format(code, '~p', [Variant]),
     format(' '),
     (   Falsecount == 0
@@ -148,6 +152,20 @@ print_node(Variant, Falsecount) :-
     ;   ansi_format([bg(red),fg(white)], '[~D]', [Falsecount])
     ).
 
+pflags(Variant, Flags) :-
+    findall(F, flag(Variant, F), Flags).
+
+flag(Variant, Flag) :-
+    (   pflag(Variant, dynamic,     'D', Flag)
+    ;   pflag(Variant, incremental, 'I', Flag)
+    ;   pflag(Variant, monotonic,   'M', Flag)
+    ).
+
+pflag(Variant, Property, Char, Flag) :-
+    (   predicate_property(Variant, Property)
+    ->  Flag = Char
+    ;   Flag = ' '
+    ).
 
 idg(From+FFC, Dir, To+TFC) :-
     '$tbl_variant_table'(VTrie),
