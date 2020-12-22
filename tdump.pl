@@ -173,13 +173,18 @@ pflag(Variant, Property, Char, Flag) :-
     ;   Flag = ' '
     ).
 
-idg(From+FFC, Dir, To+TFC) :-
+idg((FM:From)+FFC, Dir, (TM:To)+TFC) :-
     '$tbl_variant_table'(VTrie),
-    trie_gen(VTrie, From, ATrie),
+    trie_gen(VTrie, FM:FVariant, ATrie),
+    (   FM:'$table_mode'(From, FVariant, _FModed)
+    ->  true
+    ;   From = FVariant                 % dynamic incremental/monotonic
+    ),
     fc(ATrie, FFC),
     '$idg_edge'(ATrie, Dir, DepTrie),
     fc(DepTrie, TFC),
-    '$tbl_table_status'(DepTrie, _Status, To, _Return).
+    '$tbl_table_status'(DepTrie, _Status, TM:TVariant, _Return),
+    TM:'$table_mode'(To, TVariant, _TModed).
 
 fc(ATrie, FC) :-
     (   '$idg_falsecount'(ATrie, FC0)
