@@ -66,8 +66,10 @@ tdump(M:Goal, Options) :-
         ),
         sort(1, @<, Pairs, Sorted),
         length(Sorted, Count),
-        ansi_format(comment, ' (~p, ~p, ~w~D answers)~n',
-                    [Scope, Status, ExtraProp, Count]),
+        status_color(Status, Color),
+        ansi_format(comment, ' (~p,', [Scope]),
+        ansi_format(Color,   ' ~p', [Status]),
+        ansi_format(comment, ', ~w~D answers)~n', [ExtraProp, Count]),
         (   Count == 0
         ->  ansi_format(warning, '  (empty)~n', [])
         ;   forall(limit(Limit, member(Ans, Sorted)),
@@ -76,6 +78,10 @@ tdump(M:Goal, Options) :-
         fail
     ;   true
     ).
+
+status_color(invalid, warning) :- !.
+status_color(_, comment).
+
 
 table(local, Variant, Trie) :-
     '$tbl_local_variant_table'(VariantTrie),
