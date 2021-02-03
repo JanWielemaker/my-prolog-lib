@@ -3,6 +3,7 @@
             tdump/1,                            % :Goal
             tdump/2,                            % :Goal, +Options
             idg/0,
+            idg/1,                              % :Goal
             summarize_idg/0,
             summarize_idg/1                     % +Top
           ]).
@@ -16,6 +17,7 @@
 :- meta_predicate
     tdump(:),
     tdump(:, +),
+    idg(:),
     summarize_idg(:).
 
 %!  tdump is det.
@@ -128,9 +130,11 @@ unqualify(M:G, M, G) :-
     !.
 unqualify(G, _, G).
 
-%!  idg
+%!  idg is det.
+%!  idg(:Goal) is det.
 %
-%   Dump the incremental dependency graph.
+%   Dump the incremental dependency graph. idg/1  dumps the graph around
+%   a given node
 
 idg :-
     ansi_format(comment,
@@ -140,6 +144,23 @@ idg :-
                    numbervars(To),
                    print_edge(From, FFC, To, TFC)
                  )).
+
+idg(M:Node) :-
+    ansi_format(comment,
+                '% Node1 [falsecount] (affects -->) Node1 [falsecount]~n', []),
+    ansi_format([bold], 'Affected nodes~n', []),
+    forall(idg((M:Node)+FFC, affected, (_:To)+TFC),
+           \+ \+ ( numbervars(Node),
+                   numbervars(To),
+                   print_edge(Node, FFC, To, TFC)
+                 )),
+    ansi_format([bold], 'Dependent nodes~n', []),
+    forall(idg((_:From)+FFC, affected, (M:Node)+TFC),
+           \+ \+ ( numbervars(From),
+                   numbervars(Node),
+                   print_edge(From, FFC, Node, TFC)
+                 )).
+
 
 print_edge(From, FFC, To, TFC) :-
     format('  '),
@@ -176,15 +197,19 @@ pflag(Variant, Property, Char, Flag) :-
 idg((FM:From)+FFC, Dir, (TM:To)+TFC) :-
     '$tbl_variant_table'(VTrie),
     trie_gen(VTrie, FM:FVariant, ATrie),
-    (   FM:'$table_mode'(From, FVariant, _FModed)
+    (   FM:'$table_mode'(From1, FVariant, _FModed)
     ->  true
-    ;   From = FVariant                 % dynamic incremental/monotonic
+    ;   From1 = FVariant                 % dynamic incremental/monotonic
     ),
+    subsumes_term(From, From1),
+    From = From1,
     fc(ATrie, FFC),
     '$idg_edge'(ATrie, Dir, DepTrie),
     fc(DepTrie, TFC),
     '$tbl_table_status'(DepTrie, _Status, TM:TVariant, _Return),
-    TM:'$table_mode'(To, TVariant, _TModed).
+    TM:'$table_mode'(To1, TVariant, _TModed),
+    subsumes_term(To, To1),
+    To = To1.
 
 fc(ATrie, FC) :-
     (   '$idg_falsecount'(ATrie, FC0)
