@@ -87,10 +87,14 @@ status_color(_, comment).
 
 table(local, Variant, Trie) :-
     '$tbl_local_variant_table'(VariantTrie),
-    trie_gen(VariantTrie, Variant, Trie).
+    trie_gen(VariantTrie, Variant0, Trie),
+    subsumes_term(Variant, Variant0),
+    Variant = Variant0.
 table(global, Variant, Trie) :-
     '$tbl_global_variant_table'(VariantTrie),
-    trie_gen(VariantTrie, Variant, Trie).
+    trie_gen(VariantTrie, Variant0, Trie),
+    subsumes_term(Variant, Variant0),
+    Variant = Variant0.
 
 
 dump_answer(M, Answer0-true) :-

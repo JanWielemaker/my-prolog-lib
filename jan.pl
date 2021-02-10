@@ -16,7 +16,7 @@
 	    tmon/0,			% Thread monitor
 	    dbg/0,			% Graphical debugger front-end
 	    tserv/0,			% Start server
-	    system_list_undefined/0	% List all undefined predicates
+	    system_list_undefined/0     % List all undefined predicates
 	  ]).
 :- autoload(library(check),[list_undefined/1]).
 :- autoload(library(prolog_server),[prolog_server/2]).
