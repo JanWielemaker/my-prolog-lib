@@ -180,7 +180,7 @@ print_node(Variant, Falsecount) :-
     format(' '),
     (   Falsecount == 0
     ->  ansi_format(comment, '[0]', [])
-    ;   ansi_format([bg(red),fg(white)], '[~D]', [Falsecount])
+    ;   ansi_format([bg(red),fg(white)], '[~w]', [Falsecount])
     ).
 
 pflags(Variant, Flags) :-
@@ -217,7 +217,10 @@ idg((FM:From)+FFC, Dir, (TM:To)+TFC) :-
 
 fc(ATrie, FC) :-
     (   '$idg_falsecount'(ATrie, FC0)
-    ->  FC = FC0
+    ->  (   '$idg_forced'(ATrie)
+        ->  FC = FC0/'F'
+        ;   FC = FC0
+        )
     ;   FC = 0
     ).
 
