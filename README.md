@@ -20,7 +20,7 @@ Prolog using the following command:
        make_directory_path(Dir),
        git([ clone,
              'https://github.com/JanWielemaker/my-prolog-lib',
-             prolog
+             lib
            ],
            [ directory(Dir)
            ]).
