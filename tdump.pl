@@ -143,37 +143,37 @@ unqualify(G, _, G).
 idg :-
     ansi_format(comment,
                 '% Node1 [falsecount] (affects -->) Node1 [falsecount]~n', []),
-    forall(idg((_:From)+FFC, affected, (_:To)+TFC),
+    forall(idg(t(_:From,FFC,FAC), affected, t(_:To,TFC,TAC)),
            \+ \+ ( numbervars(From),
                    numbervars(To),
-                   print_edge(From, FFC, To, TFC)
+                   print_edge(From, FFC,FAC, To, TFC,TAC)
                  )).
 
 idg(M:Node) :-
     ansi_format(comment,
                 '% Node1 [falsecount] (affects -->) Node1 [falsecount]~n', []),
     ansi_format([bold], 'Affected nodes~n', []),
-    forall(idg((M:Node)+FFC, affected, (_:To)+TFC),
+    forall(idg(t(M:Node,FFC,FAC), affected, t(_:To,TFC,TAC)),
            \+ \+ ( numbervars(Node),
                    numbervars(To),
-                   print_edge(Node, FFC, To, TFC)
+                   print_edge(Node, FFC,FAC, To, TFC,TAC)
                  )),
     ansi_format([bold], 'Dependent nodes~n', []),
-    forall(idg((_:From)+FFC, affected, (M:Node)+TFC),
+    forall(idg(t(_:From,FFC,FAC), affected, t(M:Node,TFC,TAC)),
            \+ \+ ( numbervars(From),
                    numbervars(Node),
-                   print_edge(From, FFC, Node, TFC)
+                   print_edge(From, FFC,FAC, Node, TFC,TAC)
                  )).
 
 
-print_edge(From, FFC, To, TFC) :-
+print_edge(From, FFC,FAC, To, TFC,TAC) :-
     format('  '),
-    print_node(From, FFC),
+    print_node(From, FFC,FAC),
     format(' --> '),
-    print_node(To, TFC),
+    print_node(To, TFC,TAC),
     nl.
 
-print_node(Variant, Falsecount) :-
+print_node(Variant, Falsecount, AnswerCount) :-
     pflags(Variant, Flags),
     format('~s ', [Flags]),
     ansi_format(code, '~p', [Variant]),
@@ -181,7 +181,13 @@ print_node(Variant, Falsecount) :-
     (   Falsecount == 0
     ->  ansi_format(comment, '[0]', [])
     ;   ansi_format([bg(red),fg(white)], '[~w]', [Falsecount])
-    ).
+    ),
+    print_answer_count(AnswerCount).
+
+print_answer_count(answers(Count)) =>
+    format(' (~Da)', [Count]).
+print_answer_count(clauses(Count)) =>
+    format(' (~Dc)', [Count]).
 
 pflags(Variant, Flags) :-
     findall(F, flag(Variant, F), Flags).
@@ -198,7 +204,7 @@ pflag(Variant, Property, Char, Flag) :-
     ;   Flag = ' '
     ).
 
-idg((FM:From)+FFC, Dir, (TM:To)+TFC) :-
+idg(t(FM:From,FFC,FAC), Dir, t(TM:To,TFC,TAC)) :-
     '$tbl_variant_table'(VTrie),
     trie_gen(VTrie, FM:FVariant, ATrie),
     (   FM:'$table_mode'(From1, FVariant, _FModed)
@@ -207,15 +213,21 @@ idg((FM:From)+FFC, Dir, (TM:To)+TFC) :-
     ),
     subsumes_term(From, From1),
     From = From1,
-    fc(ATrie, FFC),
+    fc(ATrie, From, FFC,FAC),
     '$idg_edge'(ATrie, Dir, DepTrie),
-    fc(DepTrie, TFC),
     '$tbl_table_status'(DepTrie, _Status, TM:TVariant, _Return),
     TM:'$table_mode'(To1, TVariant, _TModed),
     subsumes_term(To, To1),
-    To = To1.
+    To = To1,
+    fc(DepTrie, To, TFC,TAC).
 
-fc(ATrie, FC) :-
+fc(ATrie, Variant, FC, AC) :-
+    (   predicate_property(Variant, tabled)
+    ->  trie_property(ATrie, value_count(C)),
+        AC = answers(C)
+    ;   aggregate_all(count, Variant, C),
+        AC = clauses(C)
+    ),
     (   '$idg_falsecount'(ATrie, FC0)
     ->  (   '$idg_forced'(ATrie)
         ->  FC = FC0/'F'
