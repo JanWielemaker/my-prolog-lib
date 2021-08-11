@@ -225,7 +225,7 @@ fc(ATrie, Variant, FC, AC) :-
     (   predicate_property(Variant, tabled)
     ->  trie_property(ATrie, value_count(C)),
         AC = answers(C)
-    ;   aggregate_all(count, Variant, C),
+    ;   aggregate_all(count, clause(Variant,_), C),
         AC = clauses(C)
     ),
     (   '$idg_falsecount'(ATrie, FC0)
