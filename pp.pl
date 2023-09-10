@@ -49,7 +49,7 @@ dump_var2(Name, Value) :-
 	ansi_format([bold,fg(magenta)], '~w', [Name]),
 	format(' = '),
 	atom_length(Name, NameLen),
-	LeftMargin = NameLen + 3,
+	LeftMargin is NameLen + 3,
 	print_term(Value,
 		   [ output(current_output),
 		     left_margin(LeftMargin)
