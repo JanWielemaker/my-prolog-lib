@@ -43,7 +43,7 @@ tdump(M:Goal, Options) :-
     option(scope(Scope), Options, _),
     option(limit(Limit), Options, 100),
     (   table(Scope, M:Goal, Trie),
-        '$tbl_table_status'(Trie, Status, M:Variant, Skeleton),
+	'$tbl_table_status'(Trie, Status, M:Variant, Skeleton),
         M:'$table_mode'(Head0, Variant, Moded),
         Head = M:Head0,
         (   option(reset(true), Options)
@@ -53,9 +53,7 @@ tdump(M:Goal, Options) :-
         ansi_format(comment, 'Trie for variant ', []),
         pflags(Variant, Flags),
         format('~s ', [Flags]),
-        \+ \+ ( numbervars(Head, 0, _),
-                ansi_format(code,  '~p', [Head])
-              ),
+        print_variant(Head),
         Answer = Head,
         '$tbl_trienode'(Reserved),
         (   Moded == Reserved
@@ -96,13 +94,23 @@ table(global, Variant, Trie) :-
     subsumes_term(Variant, Variant0),
     Variant = Variant0.
 
+print_variant(Head) :-
+    term_attvars(Head, []),
+    !,
+    \+ \+ ( numbervars(Head, 0, _),
+            ansi_format(code,  '~p', [Head])
+          ).
+print_variant(Head) :-
+    copy_term(Head, Copy, Constraints),
+    numbervars(Copy+Constraints, 0, _),
+    format('~p', [Copy]),
+    forall(member(C, Constraints),
+           ansi_format(fg(blue), ', ~p', [C])).
 
 dump_answer(M, Answer0-true) :-
     !,
     unqualify(Answer0, M, Answer),
-    \+ \+ ( numbervars(Answer, 0, _),
-            format('  ~p~n', [Answer])
-          ).
+    \+ \+ print_answer(Answer).
 dump_answer(M, Answer0-Condition) :-
     unqualify(Answer0, M, Answer),
     unqualify(Condition, M, SimpleCondition),
@@ -111,6 +119,19 @@ dump_answer(M, Answer0-Condition) :-
             ansi_format(bold, ' :- ', []),
             ansi_format(fg(cyan), '~p~n', [SimpleCondition])
           ).
+
+print_answer(Answer) :-
+    term_attvars(Answer, []),
+    !,
+    numbervars(Answer, 0, _),
+    format('  ~p~n', [Answer]).
+print_answer(Answer) :-
+    copy_term(Answer, Copy, Constraints),
+    numbervars(Copy+Constraints, 0, _),
+    format('  ~p', [Copy]),
+    forall(member(C, Constraints),
+           ansi_format(fg(blue), ', ~p', [C])),
+    nl.
 
 unqualify(Var, _M, Var) :-
     var(Var),

@@ -45,10 +45,10 @@ summary_table_width(55).
 %       Number of times answers are generated from a completed
 %       table, i.e., times answers are _reused_.
 %     - invalidated
-%       Number of times an incremental table was invaldated.
+%       Number of times an incremental table was invalidated.
 %     - reevaluated
-%       Number of times an invaldated table wa reevaluated.  If
-%       lower than `invaldated` this implies that dependent nodes
+%       Number of times an invalidated table wa reevaluated.  If
+%       lower than `invalidated` this implies that dependent nodes
 %       of the IDG were reevaluated to the same answer set.
 %     - space
 %       Summed memory usage of the answer tries in bytes.
@@ -82,7 +82,7 @@ table_statistics_(Variant, Stat, Total) :-
 
 hidden_stat(variables, _).
 hidden_stat(lookup, _).
-hidden_stat(invaldated, Variant) :-
+hidden_stat(invalidated, Variant) :-
     callable(Variant),
     \+ predicate_property(Variant, tabled(incremental)).
 hidden_stat(reevaluated, Variant) :-

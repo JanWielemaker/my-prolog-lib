@@ -55,3 +55,9 @@ dump_var2(Name, Value) :-
 		     left_margin(LeftMargin)
 		   ]),
 	nl.
+
+                /*******************************
+                *  SUPPRESS AUTOLOAD WARNINGS  *
+                *******************************/
+
+'$nowarn_autoload'(pp/1, user).
