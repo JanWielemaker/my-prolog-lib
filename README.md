@@ -4,9 +4,6 @@ This library contains utilities that I use for development. Surely many
 are not of interest to anyone but me. Still, there might be some useful
 tips and tricks in this library.
 
-__NOTE:__ the below is for SWI-Prolog 8.1.x.  On the stable 8.0.x the
-personal library is at ``~/lib/prolog``.
-
 This library should be installed   in  ``~/.config/swi-prolog/lib``. See
 [expand_file_name/2](https://www.swi-prolog.org/pldoc/doc_for?object=expand_file_name/2)
 for details. To find this directory on Windows, use
@@ -36,4 +33,11 @@ that is a shorthand for print_term/2, e.g.
     ?- pp('Hello world').
     'Hello world'
 
+## Tabling utilities
 
+This library used to  contain  `tdump.pl`   and  `tstat.pl`.  These  two
+libraries are merged into `library(tableutil)` as  of version 10.1.5. If
+you use an older version of SWI-Prolog,   checkout  a version that still
+contains these libraries:
+
+    git checkout 32dc8c0192ae7d2659c2d0359fd684253913680b
