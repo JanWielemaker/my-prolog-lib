@@ -7,12 +7,13 @@
             summarize_idg/0,
             summarize_idg/1                     % +Top
           ]).
-:- use_module(library(lists)).
-:- use_module(library(option)).
-:- use_module(library(ansi_term)).
-:- use_module(library(varnumbers)).
-:- use_module(library(solution_sequences)).
-:- use_module(library(aggregate)).
+:- autoload(library(lists), [member/2]).
+:- autoload(library(aggregate), [aggregate_all/3]).
+:- autoload(library(ansi_term), [ansi_format/3]).
+:- autoload(library(option), [option/3, option/2]).
+:- autoload(library(prolog_code), [pi_head/2]).
+:- autoload(library(solution_sequences), [limit/2, order_by/2]).
+:- autoload(library(varnumbers), [numbervars/1]).
 
 :- meta_predicate
     tdump(:),

@@ -8,10 +8,14 @@
             tstat/2,                            % ?Stat, ?Top
             tstat/3                             % ?Variant, ?Stat, ?Top
           ]).
-:- use_module(library(option)).
-:- use_module(library(error)).
-:- use_module(library(aggregate)).
-:- use_module(library(solution_sequences)).
+:- autoload(library(option), [option/3, option/2]).
+:- autoload(library(aggregate), [aggregate_all/3]).
+:- autoload(library(ansi_term), [ansi_format/3]).
+:- autoload(library(apply), [exclude/3, maplist/2]).
+:- autoload(library(dif), [dif/2]).
+:- autoload(library(error), [domain_error/2]).
+:- autoload(library(lists), [member/2]).
+:- autoload(library(solution_sequences), [limit/2, order_by/2]).
 
 :- meta_predicate
     table_statistics(:),
