@@ -1,4 +1,4 @@
-:- module(chat,
+:- module(chat_loader,
           [ rtest_chats/1,               % +Times
             test_chat/0
           ]).
